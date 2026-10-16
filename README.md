@@ -35,8 +35,8 @@ Access to the Administrative Dashboard and Inventory Control Center is protected
 | Field | Value |
 | :--- | :--- |
 | **Admin Portal URL** | Access via the **"Admin Panel"** navigation button or `/admin` route |
-| **Admin ID / Username** | `Rahu1819` |
-| **Admin Password** | `Ritadevi@181920` |
+| **Admin ID / Username** | `Confidential (Store Administrator)` |
+| **Admin Password** | `Confidential (Authorized Store Personnel Only)` |
 | **Role** | Store Owner / Master Administrator |
 
 ### Security Features

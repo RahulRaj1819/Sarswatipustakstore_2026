@@ -78,7 +78,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     return sessionStorage.getItem('spsb_admin_auth') === 'true';
   });
   const [adminIdInput, setAdminIdInput] = useState<string>(() => {
-    return sessionStorage.getItem('spsb_admin_id') || 'Rahu1819';
+    return sessionStorage.getItem('spsb_admin_id') || '';
   });
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [loginError, setLoginError] = useState<string>('');
@@ -221,7 +221,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
       sessionStorage.setItem('spsb_admin_id', 'Rahu1819');
       setLoginError('');
     } else {
-      setLoginError('Invalid credentials! Admin ID must be "Rahu1819" and password must be "Ritadevi@181920".');
+      setLoginError('Invalid Admin ID or Password. Access denied.');
     }
   };
 
@@ -573,7 +573,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Enter Admin ID (e.g. Rahu1819)"
+                placeholder="Enter Admin ID"
                 value={adminIdInput}
                 onChange={(e) => setAdminIdInput(e.target.value)}
                 className="w-full text-xs p-3 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -587,31 +587,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({
               <input
                 type="password"
                 required
-                placeholder="Enter Password (e.g. Ritadevi@181920)"
+                placeholder="Enter Admin Password"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 className="w-full text-xs p-3 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-            </div>
-
-            {/* Quick Demo Helper Chip for instant validation */}
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Authorized Credentials:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAdminIdInput('Rahu1819');
-                    setPasswordInput('Ritadevi@181920');
-                  }}
-                  className="text-navy font-bold hover:underline"
-                >
-                  Autofill Credentials
-                </button>
-              </div>
-              <div className="text-[11px] text-slate-600 font-mono mt-1">
-                ID: <strong>Rahu1819</strong> • Pass: <strong>Ritadevi@181920</strong>
-              </div>
             </div>
 
             {loginError && (
