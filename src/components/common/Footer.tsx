@@ -167,7 +167,9 @@ export const Footer: React.FC<FooterProps> = ({
                   className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <span>{t('cat.sports')}</span>
-                  <span className="text-[10px] bg-accent-orange text-white px-1 py-0.2 rounded font-bold uppercase">11 Cats</span>
+                  <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-bold uppercase">
+                    {language === 'hi' ? '11 श्रेणियां' : '11 Cats'}
+                  </span>
                 </button>
               </li>
               <li>
@@ -267,8 +269,8 @@ export const Footer: React.FC<FooterProps> = ({
               {t('footer.terms')}
             </button>
             <span>•</span>
-            <button onClick={() => onNavigate('admin')} className="text-amber-400 hover:text-amber-300 font-semibold">
-              Admin
+            <button onClick={() => onNavigate('admin')} className="text-amber-400 hover:text-amber-300 font-semibold cursor-pointer">
+              {t('nav.admin')}
             </button>
           </div>
         </div>

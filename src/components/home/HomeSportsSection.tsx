@@ -23,7 +23,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-cricket',
     title: 'Cricket',
-    titleHi: 'क्रिकेट (Cricket)',
+    titleHi: 'क्रिकेट',
     subtitle: 'Kashmir Willow Bats, Tennis Balls & SG Kits',
     subtitleHi: 'कश्मीर विलो बैट, टेनिस बॉल एवं SG किट',
     image: 'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=600&q=80',
@@ -33,7 +33,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-football',
     title: 'Football',
-    titleHi: 'फुटबॉल (Football)',
+    titleHi: 'फुटबॉल',
     subtitle: 'Size 5 Match Balls, Moulded Studs & Shin Guards',
     subtitleHi: 'साइज 5 मैच फुटबॉल, स्टड्स व शिन गार्ड्स',
     image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=600&q=80',
@@ -43,7 +43,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-badminton',
     title: 'Badminton',
-    titleHi: 'बैडमिंटन (Badminton)',
+    titleHi: 'बैडमिंटन',
     subtitle: 'Isometric Rackets, Mavis 350 Shuttles & Nets',
     subtitleHi: 'योनेक्स रैकेट, माविस 350 शटल व कोर्ट नेट',
     image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80',
@@ -53,7 +53,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-volleyball',
     title: 'Volleyball',
-    titleHi: 'वॉलीबॉल (Volleyball)',
+    titleHi: 'वॉलीबॉल',
     subtitle: 'Cosco Super Volley Balls & Heavy Court Nets',
     subtitleHi: 'कॉस्को सुपर वॉली बॉल व मजबूत कोर्ट नेट',
     image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=600&q=80',
@@ -63,7 +63,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-basketball',
     title: 'Basketball',
-    titleHi: 'बास्केटबॉल (Basketball)',
+    titleHi: 'बास्केटबॉल',
     subtitle: 'Size 7 Outdoor Grippy Balls & Hoop Nets',
     subtitleHi: 'साइज 7 आउटडोर ग्रिप बॉल व हूप नेट',
     image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80',
@@ -73,7 +73,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-fitness',
     title: 'Fitness & Gym',
-    titleHi: 'फिटनेस व जिम (Fitness)',
+    titleHi: 'फिटनेस व जिम',
     subtitle: '10mm Yoga Mats, Speed Skipping Ropes & Grippers',
     subtitleHi: 'योगा मैट, स्किपिंग रोप, ग्रिपर व डम्बल',
     image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80',
@@ -83,7 +83,7 @@ const FEATURED_SPORTS_CATEGORIES: SportsPreviewCard[] = [
   {
     id: 'sports-indoor-games',
     title: 'Indoor Games',
-    titleHi: 'कैरम व शतरंज (Indoor Games)',
+    titleHi: 'कैरम व शतरंज',
     subtitle: '32" Assam Plywood Carrom Boards & Tournament Chess',
     subtitleHi: '32" असम प्लाइवुड कैरम बोर्ड व शतरंज',
     image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=600&q=80',
@@ -193,7 +193,7 @@ export const HomeSportsSection: React.FC<HomeSportsSectionProps> = ({
               </div>
 
               <div className="px-3.5 sm:px-4 pb-3.5 sm:pb-4 pt-1 flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-slate-400 group-hover:text-amber-300 transition-colors">
-                <span className="truncate">Top: {item.popularItem}</span>
+                <span className="truncate">{language === 'hi' ? `प्रमुख: ${item.popularItem}` : `Top: ${item.popularItem}`}</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
             </div>

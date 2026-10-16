@@ -173,11 +173,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Suggestions Dropdown */}
             {isSearchFocused && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden z-50">
                 {searchSuggestions.length > 0 ? (
                   <div>
-                    <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Matching Products ({searchSuggestions.length})
+                    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {language === 'hi' ? 'मिलते-जुलते उत्पाद' : 'Matching Products'} ({searchSuggestions.length})
                     </div>
                     {searchSuggestions.map((item) => (
                       <div
@@ -186,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({
                           onOpenProductModal(item);
                           setIsSearchFocused(false);
                         }}
-                        className="px-4 py-2.5 hover:bg-brand-50/60 flex items-center justify-between cursor-pointer border-b border-slate-50 last:border-b-0 transition-colors"
+                        className="px-4 py-2.5 hover:bg-brand-50/60 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-b-0 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <img 
@@ -195,20 +195,20 @@ export const Header: React.FC<HeaderProps> = ({
                             onError={(e) => {
                               e.currentTarget.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=100&q=80';
                             }}
-                            className="w-10 h-10 object-cover rounded-md border border-slate-200" 
+                            className="w-10 h-10 object-cover rounded-md border border-slate-200 dark:border-slate-700" 
                           />
                           <div>
-                            <div className="text-sm font-medium text-slate-800 line-clamp-1">{item.name}</div>
-                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 line-clamp-1">{item.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
                               <span className="capitalize">{item.category.replace(/-/g, ' ')}</span>
                               {item.brand && <span>• {item.brand}</span>}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-bold text-brand-900">{formatINR(item.price)}</div>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.stock > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-                            {item.stock > 0 ? 'In Stock' : 'Call store'}
+                          <div className="text-sm font-bold text-brand-900 dark:text-amber-400">{formatINR(item.price)}</div>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${item.stock > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400'}`}>
+                            {item.stock > 0 ? (language === 'hi' ? 'उपलब्ध है' : 'In Stock') : (language === 'hi' ? 'स्टोर से पूछें' : 'Call store')}
                           </span>
                         </div>
                       </div>
@@ -218,15 +218,15 @@ export const Header: React.FC<HeaderProps> = ({
                         setIsSearchFocused(false);
                         onNavigate('shop');
                       }}
-                      className="px-4 py-2 text-center text-xs font-semibold text-brand-700 hover:bg-brand-50 cursor-pointer border-t border-slate-100"
+                      className="px-4 py-2 text-center text-xs font-semibold text-brand-700 dark:text-amber-400 hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer border-t border-slate-100 dark:border-slate-800"
                     >
-                      View All Search Results for "{searchQuery}" →
+                      {language === 'hi' ? `"${searchQuery}" के लिए सभी परिणाम देखें →` : `View All Search Results for "${searchQuery}" →`}
                     </div>
                   </div>
                 ) : searchQuery.trim().length >= 2 ? (
                   <div className="p-4 text-center">
-                    <p className="text-sm text-slate-600">No exact matches found for "{searchQuery}"</p>
-                    <p className="text-xs text-slate-400 mt-1">We might still have it physically in our Pachrukhi store!</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{language === 'hi' ? `"${searchQuery}" के लिए कोई सीधा परिणाम नहीं मिला` : `No exact matches found for "${searchQuery}"`}</p>
+                    <p className="text-xs text-slate-400 mt-1">{language === 'hi' ? 'यह हमारे पचरुखी स्टोर में उपलब्ध हो सकता है!' : 'We might still have it physically in our Pachrukhi store!'}</p>
                     <a
                       href={`https://wa.me/${settings.whatsappNumber}?text=Namaste,%20do%20you%20have%20stock%20for:%20${encodeURIComponent(searchQuery)}?`}
                       target="_blank"
@@ -234,12 +234,12 @@ export const Header: React.FC<HeaderProps> = ({
                       className="inline-flex items-center gap-1.5 mt-2.5 text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-medium"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      Ask Availability on WhatsApp
+                      {language === 'hi' ? 'व्हाट्सएप पर उपलब्धता पूछें' : 'Ask Availability on WhatsApp'}
                     </a>
                   </div>
                 ) : (
                   <div className="p-3">
-                    <div className="text-xs font-semibold text-slate-500 mb-2">Popular In Pachrukhi &amp; Siwan</div>
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">{language === 'hi' ? 'पचरुखी और सीवान में लोकप्रिय' : 'Popular In Pachrukhi & Siwan'}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {['NCERT Science 10', 'Lucent GK', 'Cricket Bat', 'Classmate Long Book', 'Casio Calculator', 'Yonex Racket', 'Geometry Box'].map((tag) => (
                         <button
@@ -250,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
                             onNavigate('shop');
                             setIsSearchFocused(false);
                           }}
-                          className="text-xs bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 px-2.5 py-1 rounded-full transition-colors"
+                          className="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-slate-700 hover:text-brand-700 dark:hover:text-amber-300 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
                         >
                           {tag}
                         </button>
@@ -271,17 +271,17 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden xl:flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-xs hover:shadow transition-all cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>School Booklists</span>
+              <span>{language === 'hi' ? 'स्कूल बुकलिस्ट' : 'School Booklists'}</span>
             </button>
 
             {/* Track Order */}
             <button
               onClick={() => onNavigate('track-order')}
-              title="Track Order Status"
-              className="hidden md:flex items-center gap-1.5 text-slate-700 hover:text-brand-900 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 text-xs font-medium transition-colors"
+              title={language === 'hi' ? 'ऑर्डर की स्थिति देखें' : 'Track Order Status'}
+              className="hidden md:flex items-center gap-1.5 text-slate-700 dark:text-slate-300 hover:text-brand-900 dark:hover:text-amber-400 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition-colors cursor-pointer"
             >
-              <PackageCheck className="w-4 h-4 text-brand-600" />
-              <span className="hidden lg:inline">Track Order</span>
+              <PackageCheck className="w-4 h-4 text-brand-600 dark:text-amber-400" />
+              <span className="hidden lg:inline">{language === 'hi' ? 'ऑर्डर ट्रैक करें' : 'Track Order'}</span>
             </button>
 
             {/* Wishlist (hidden on xs mobile as it is in bottom nav) */}
@@ -332,7 +332,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Bilingual Language Switcher (EN | हिंदी) */}
             <button
               onClick={toggleLanguage}
-              title={language === 'en' ? 'हिंदी में बदलें (Switch to Hindi)' : 'Switch to English'}
+              title={language === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
               className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-brand-500 text-xs font-extrabold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
             >
               <Globe className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
@@ -342,7 +342,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Dark & Light Theme Switcher */}
             <button
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={theme === 'dark' ? (language === 'hi' ? 'लाइट मोड में बदलें' : 'Switch to Light Mode') : (language === 'hi' ? 'डार्क मोड में बदलें' : 'Switch to Dark Mode')}
               className="p-2 text-slate-700 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer shadow-2xs"
               aria-label="Toggle Theme"
             >
@@ -447,7 +447,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
             <span>{t('nav.sports')}</span>
             <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold">
-              11 Cats
+              {language === 'hi' ? '11 श्रेणियां' : '11 Cats'}
             </span>
           </button>
 
@@ -531,17 +531,17 @@ export const Header: React.FC<HeaderProps> = ({
                 <ChevronDown className="w-3 h-3 opacity-75" />
               </button>
               {isBooksDropdownOpen && (
-                <div className="absolute left-0 top-full w-64 bg-white text-slate-800 rounded-b-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute left-0 top-full w-64 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-b-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <button
                     onClick={() => {
                       onSelectCategory('school-ncert');
                       onNavigate('shop');
                       setIsBooksDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium flex items-center justify-between"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium flex items-center justify-between cursor-pointer"
                   >
-                    <span>NCERT Textbooks (Class 6–12)</span>
-                    <span className="text-[10px] bg-brand-100 text-brand-800 px-1.5 py-0.5 rounded">CBSE</span>
+                    <span>{language === 'hi' ? 'एनसीईआरटी पुस्तकें (कक्षा 6–12)' : 'NCERT Textbooks (Class 6–12)'}</span>
+                    <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-bold">CBSE</span>
                   </button>
                   <button
                     onClick={() => {
@@ -549,10 +549,10 @@ export const Header: React.FC<HeaderProps> = ({
                       onNavigate('shop');
                       setIsBooksDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium flex items-center justify-between"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium flex items-center justify-between cursor-pointer"
                   >
-                    <span>Bihar Board (Class 1–10 BSTBPC)</span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">BSEB</span>
+                    <span>{language === 'hi' ? 'बिहार बोर्ड (कक्षा 1–10 BSTBPC)' : 'Bihar Board (Class 1–10 BSTBPC)'}</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">BSEB</span>
                   </button>
                   <button
                     onClick={() => {
@@ -560,23 +560,23 @@ export const Header: React.FC<HeaderProps> = ({
                       onNavigate('shop');
                       setIsBooksDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    College &amp; Higher Education
+                    <span>{language === 'hi' ? 'कॉलेज और संदर्भ पुस्तकें' : 'College & Higher Education'}</span>
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Competitive Exam Books (BPSC / SSC removed per user request) */}
+            {/* Competitive Exam Books */}
             <button
               onClick={() => {
                 onSelectCategory('competitive-exams');
                 onNavigate('shop');
               }}
-              className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors font-semibold"
+              className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors font-semibold cursor-pointer"
             >
-              <span>Competitive Exam Guides</span>
+              <span>{t('cat.competitive')}</span>
             </button>
 
             {/* Stationery Dropdown */}
@@ -590,22 +590,22 @@ export const Header: React.FC<HeaderProps> = ({
                   onSelectCategory('stationery');
                   onNavigate('shop');
                 }}
-                className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold"
+                className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold cursor-pointer"
               >
-                <span>Stationery &amp; Notebooks</span>
+                <span>{t('cat.stationery')}</span>
                 <ChevronDown className="w-3 h-3 opacity-75" />
               </button>
               {isStationeryDropdownOpen && (
-                <div className="absolute left-0 top-full w-56 bg-white text-slate-800 rounded-b-xl shadow-xl border border-slate-200 py-2 z-50">
+                <div className="absolute left-0 top-full w-60 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-b-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
                   <button
                     onClick={() => {
                       onSelectCategory('notebooks');
                       onNavigate('shop');
                       setIsStationeryDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    Classmate Notebooks &amp; Registers
+                    <span>{language === 'hi' ? 'क्लासमेट कॉपियां एवं रजिस्टर्स' : 'Classmate Notebooks & Registers'}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -613,9 +613,9 @@ export const Header: React.FC<HeaderProps> = ({
                       onNavigate('shop');
                       setIsStationeryDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    Pens, Highlighters &amp; Pencils
+                    <span>{language === 'hi' ? 'पेन, हाइलाइटर एवं पेंसिल' : 'Pens, Highlighters & Pencils'}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -623,9 +623,9 @@ export const Header: React.FC<HeaderProps> = ({
                       onNavigate('shop');
                       setIsStationeryDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    Art Supplies &amp; Project Paper
+                    <span>{language === 'hi' ? 'कला, क्राफ्ट एवं चार्ट पेपर' : 'Art Supplies & Project Paper'}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -633,9 +633,9 @@ export const Header: React.FC<HeaderProps> = ({
                       onNavigate('shop');
                       setIsStationeryDropdownOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-brand-50 text-xs font-medium"
+                    className="w-full text-left px-4 py-2 hover:bg-brand-50 dark:hover:bg-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    School Bags &amp; Backpacks
+                    <span>{language === 'hi' ? 'स्कूल बैग एवं वाटर बॉटल' : 'School Bags & Backpacks'}</span>
                   </button>
                 </div>
               )}
@@ -649,26 +649,26 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <button
                 onClick={() => onNavigate('sports')}
-                className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold text-amber-300"
+                className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold text-amber-300 cursor-pointer"
               >
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
                 <span>{t('nav.sports')}</span>
                 <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold ml-0.5">
-                  11 Cats
+                  {language === 'hi' ? '11 श्रेणियां' : '11 Cats'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-75" />
               </button>
               {isSportsDropdownOpen && (
-                <div className="absolute -left-20 top-full w-[720px] bg-white text-slate-800 rounded-b-2xl shadow-2xl border border-slate-200 p-5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute -left-20 top-full w-[720px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-b-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   {/* Mega Menu Top Banner */}
                   <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-navy text-white p-3.5 rounded-xl mb-4 flex items-center justify-between">
                     <div>
                       <div className="text-xs font-bold text-amber-300 font-heading flex items-center gap-1.5">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Sarswati Sports &amp; Fitness Store</span>
+                        <span>{language === 'hi' ? 'सरस्वती स्पोर्ट्स एवं फिटनेस स्टोर' : 'Sarswati Sports & Fitness Store'}</span>
                       </div>
                       <div className="text-[11px] text-slate-300">
-                        Gear Up. Play Better. Explore match bats, official footballs &amp; school packages.
+                        {language === 'hi' ? 'मैच बैट, ऑफिशियल फुटबॉल एवं स्कूल खेल पैकेज उपलब्ध।' : 'Gear Up. Play Better. Explore match bats, official footballs & school packages.'}
                       </div>
                     </div>
                     <button
@@ -676,9 +676,9 @@ export const Header: React.FC<HeaderProps> = ({
                         setIsSportsDropdownOpen(false);
                         onNavigate('sports');
                       }}
-                      className="px-3 py-1.5 bg-accent-orange hover:bg-orange-600 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+                      className="px-3 py-1.5 bg-accent-orange hover:bg-orange-600 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
                     >
-                      Visit /sports Page →
+                      {language === 'hi' ? 'स्पोर्ट्स पेज देखें →' : 'Visit Sports Page →'}
                     </button>
                   </div>
 
@@ -687,8 +687,8 @@ export const Header: React.FC<HeaderProps> = ({
                     
                     {/* Col 1 */}
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b pb-1">
-                        Team Sports
+                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1">
+                        {language === 'hi' ? 'टीम खेल सामग्री' : 'Team Sports'}
                       </div>
                       <button
                         onClick={() => {
@@ -696,9 +696,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium flex items-center justify-between group"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between group cursor-pointer"
                       >
-                        <span>🏏 Cricket (Bats, Balls &amp; Kits)</span>
+                        <span>🏏 {language === 'hi' ? 'क्रिकेट (बैट, गेंद एवं किट)' : 'Cricket (Bats, Balls & Kits)'}</span>
                         <span className="text-[10px] text-slate-400 group-hover:text-brand-700">SG/SS</span>
                       </button>
                       <button
@@ -707,9 +707,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium flex items-center justify-between group"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between group cursor-pointer"
                       >
-                        <span>⚽ Football (Size 5, Studs, Shin)</span>
+                        <span>⚽ {language === 'hi' ? 'फुटबॉल (साइज 5, स्टड, शिन)' : 'Football (Size 5, Studs, Shin)'}</span>
                         <span className="text-[10px] text-slate-400 group-hover:text-brand-700">Nivia</span>
                       </button>
                       <button
@@ -718,9 +718,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium flex items-center justify-between group"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between group cursor-pointer"
                       >
-                        <span>🏐 Volleyball &amp; Heavy Nets</span>
+                        <span>🏐 {language === 'hi' ? 'वॉलीबॉल एवं कोर्ट नेट' : 'Volleyball & Heavy Nets'}</span>
                         <span className="text-[10px] text-slate-400 group-hover:text-brand-700">Cosco</span>
                       </button>
                       <button
@@ -729,16 +729,16 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium cursor-pointer"
                       >
-                        🏀 Basketball &amp; Rim Nets
+                        <span>🏀 {language === 'hi' ? 'बास्केटबॉल एवं रिंग नेट' : 'Basketball & Rim Nets'}</span>
                       </button>
                     </div>
 
                     {/* Col 2 */}
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b pb-1">
-                        Racket &amp; Fitness
+                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1">
+                        {language === 'hi' ? 'रैकेट एवं फिटनेस' : 'Racket & Fitness'}
                       </div>
                       <button
                         onClick={() => {
@@ -746,9 +746,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium flex items-center justify-between group"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between group cursor-pointer"
                       >
-                        <span>🏸 Badminton &amp; Mavis 350</span>
+                        <span>🏸 {language === 'hi' ? 'बैडमिंटन एवं माविस 350' : 'Badminton & Mavis 350'}</span>
                         <span className="text-[10px] text-slate-400 group-hover:text-brand-700">Yonex</span>
                       </button>
                       <button
@@ -757,9 +757,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium flex items-center justify-between group"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between group cursor-pointer"
                       >
-                        <span>🏓 Table Tennis Bats &amp; Nets</span>
+                        <span>🏓 {language === 'hi' ? 'टेबल टेनिस बैट एवं नेट' : 'Table Tennis Bats & Nets'}</span>
                         <span className="text-[10px] text-slate-400 group-hover:text-brand-700">Stag</span>
                       </button>
                       <button
@@ -768,9 +768,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium cursor-pointer"
                       >
-                        💪 Fitness, Mats &amp; Skipping Ropes
+                        <span>💪 {language === 'hi' ? 'फिटनेस, मैट एवं स्किपिंग रोप' : 'Fitness, Mats & Skipping Ropes'}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -778,16 +778,16 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium cursor-pointer"
                       >
-                        ⏱️ Athletics, Batons &amp; Whistles
+                        <span>⏱️ {language === 'hi' ? 'एथलेटिक्स, रिले एवं सीटी' : 'Athletics, Batons & Whistles'}</span>
                       </button>
                     </div>
 
                     {/* Col 3 */}
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b pb-1">
-                        School &amp; Recreation
+                      <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1">
+                        {language === 'hi' ? 'स्कूल एवं इनडोर खेल' : 'School & Recreation'}
                       </div>
                       <button
                         onClick={() => {
@@ -795,9 +795,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium text-amber-800 flex items-center justify-between"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium text-amber-800 dark:text-amber-300 flex items-center justify-between cursor-pointer"
                       >
-                        <span>🏫 School PE &amp; Sports Day Packages</span>
+                        <span>🏫 {language === 'hi' ? 'स्कूल पीई एवं खेल दिवस पैकेज' : 'School PE & Sports Day Packages'}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -805,9 +805,9 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium cursor-pointer"
                       >
-                        🎯 Carrom (32"), Chess &amp; Ludo
+                        <span>🎯 {language === 'hi' ? 'कैरम (32"), शतरंज एवं लूडो' : 'Carrom (32"), Chess & Ludo'}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -815,19 +815,19 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsSportsDropdownOpen(false);
                         }}
-                        className="w-full text-left py-1 hover:text-brand-700 font-medium"
+                        className="w-full text-left py-1 hover:text-brand-700 dark:hover:text-amber-300 font-medium cursor-pointer"
                       >
-                        🎒 Gym Bags, Sippers &amp; Supports
+                        <span>🎒 {language === 'hi' ? 'जिम बैग, सिपर एवं सपोर्ट' : 'Gym Bags, Sippers & Supports'}</span>
                       </button>
-                      <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                         <button
                           onClick={() => {
                             setIsSportsDropdownOpen(false);
                             onNavigate('sports');
                           }}
-                          className="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded text-[11px] text-center"
+                          className="w-full py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded text-[11px] text-center cursor-pointer"
                         >
-                          View Sports Combos &amp; Kits
+                          {language === 'hi' ? 'स्पोर्ट्स कॉम्बो एवं किट देखें' : 'View Sports Combos & Kits'}
                         </button>
                       </div>
                     </div>
@@ -962,7 +962,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>{t('nav.sports')}</span>
                 </div>
                 <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.5 rounded font-extrabold uppercase">
-                  Explore
+                  {language === 'hi' ? 'देखें' : 'Explore'}
                 </span>
               </button>
             </div>
@@ -971,9 +971,9 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="p-3.5 flex-1 space-y-1.5 overflow-y-auto">
               
               <div className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-                <span>{language === 'hi' ? 'मुख्य मेनू (Store Navigation)' : 'Store Navigation'}</span>
+                <span>{language === 'hi' ? 'मुख्य मेनू' : 'Store Navigation'}</span>
                 <span className="text-[10px] text-brand-600 dark:text-amber-400 font-bold">
-                  10 Sections
+                  {language === 'hi' ? '10 अनुभाग' : '10 Sections'}
                 </span>
               </div>
 
@@ -1191,7 +1191,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm font-semibold">{t('nav.sports')}</span>
                       <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold">
-                        11 Cats
+                        {language === 'hi' ? '11 श्रेणियां' : '11 Cats'}
                       </span>
                     </div>
                   </button>
@@ -1217,7 +1217,7 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                       <div className="flex items-center gap-1.5">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{language === 'hi' ? 'संपूर्ण खेल विभाग देखें (/sports)' : 'Visit Full Sports Page (/sports)'}</span>
+                        <span>{language === 'hi' ? 'संपूर्ण खेल विभाग देखें' : 'Visit Full Sports Page'}</span>
                       </div>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
