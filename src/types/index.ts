@@ -25,6 +25,10 @@ export type ProductCategory =
   | 'sports-school-pe'
   | 'sports-accessories';
 
+export type Department = 'Books' | 'Stationery' | 'Sports';
+
+export type ProductStatus = 'Active' | 'Draft' | 'Archived';
+
 export interface ProductVariant {
   id: string;
   name: string;
@@ -40,27 +44,44 @@ export interface Product {
   sku: string;
   name: string;
   slug: string;
+  department?: Department; // 'Books' | 'Stationery' | 'Sports'
   category: ProductCategory;
   subcategory?: string;
   description: string;
-  price: number;
-  mrp?: number;
+  price: number; // In Rupees
+  costPrice?: number; // In Rupees
+  mrp?: number; // In Rupees
+  costPricePaise?: number; // Stored as integer BigInt paise
+  sellingPricePaise?: number; // Stored as integer BigInt paise
+  mrpPaise?: number; // Stored as integer BigInt paise
   stock: number;
+  minStockThreshold?: number; // Default 5
+  taxRate?: number; // GST % (0, 5, 12, 18)
+  storageLocation?: string; // Shelf tag, e.g. "Rack-B3", "Sports-Bin-1"
+  status?: ProductStatus; // 'Active' | 'Draft' | 'Archived'
   images: string[];
   brand?: string;
+  
+  // Department-Specific: Books
   author?: string;
   publisher?: string;
   isbn?: string;
   classGrade?: string; // e.g. "Class 10", "Class 6-8"
   board?: 'NCERT / CBSE' | 'Bihar Board' | 'ICSE' | 'General';
   subject?: string;
-  isFeatured?: boolean;
-  isDealOfDay?: boolean;
-  rating?: number;
-  reviewCount?: number;
-  tags: string[];
-  specifications?: Record<string, string>;
-  weightGrams?: number;
+  editionYear?: string;
+
+  // Department-Specific: Stationery
+  packSize?: string; // e.g., "Pack of 5", "Box of 20"
+  itemColor?: string; // e.g., "Blue", "Black", "Assorted"
+  ruling?: 'Ruled' | 'Plain' | 'Interleaf' | 'Four Line' | string;
+  dimensions?: string; // e.g., "A4 (210 x 297 mm)"
+
+  // Department-Specific: Sports
+  sportName?: string;
+  size?: string; // e.g. 'Size 5', 'Short Handle', 'UK 8'
+  material?: string; // e.g. 'Kashmir Willow', 'English Willow', 'PU', 'Nylon'
+  playingLevel?: 'Beginner' | 'Club' | 'Tournament' | 'Professional' | string;
   sportType?: string;
   sportAttributes?: {
     batType?: string;
@@ -73,9 +94,109 @@ export interface Product {
     kitItemsIncluded?: string[];
     targetLevel?: string;
   };
+
+  isFeatured?: boolean;
+  isDealOfDay?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  tags: string[];
+  specifications?: Record<string, string>;
+  weightGrams?: number;
   variants?: ProductVariant[];
   createdAt: string;
   updatedAt: string;
+}
+
+export type StockMovementType = 
+  | 'Stock Addition (Purchase)'
+  | 'Store Sale'
+  | 'Online Order'
+  | 'WhatsApp Order'
+  | 'Manual Adjustment (Damage/Loss)'
+  | 'Bulk Import Adjustment';
+
+export interface StockMovement {
+  id: string;
+  timestamp: string;
+  sku: string;
+  productName: string;
+  department: Department;
+  movementType: StockMovementType;
+  previousStock: number;
+  newStock: number;
+  quantityDelta: number; // positive or negative
+  note?: string;
+  referenceId?: string; // e.g. PO #, Order #, Import Batch #
+  adminUser: string; // 'Rahu1819'
+}
+
+export type ImportWorkflowType = 
+  | 'create_new' 
+  | 'update_stock_prices' 
+  | 'full_upsert';
+
+export interface SpreadsheetColumnMapping {
+  sku: string;
+  name: string;
+  department: string;
+  category: string;
+  subcategory: string;
+  sellingPrice: string;
+  costPrice: string;
+  mrp: string;
+  stock: string;
+  minStockThreshold: string;
+  taxRate: string;
+  storageLocation: string;
+  status: string;
+  barcode: string;
+  // Books
+  isbn: string;
+  publisher: string;
+  author: string;
+  classGrade: string;
+  board: string;
+  subject: string;
+  editionYear: string;
+  // Stationery
+  packSize: string;
+  itemColor: string;
+  ruling: string;
+  dimensions: string;
+  // Sports
+  sportName: string;
+  size: string;
+  material: string;
+  playingLevel: string;
+}
+
+export interface ImportValidationRow {
+  rowNumber: number;
+  raw: Record<string, any>;
+  parsedSku: string;
+  parsedName: string;
+  parsedDepartment: Department;
+  parsedSellingPricePaise: number;
+  parsedCostPricePaise: number;
+  parsedMrpPaise: number;
+  parsedStock: number;
+  parsedMinStock: number;
+  parsedTaxRate: number;
+  parsedLocation: string;
+  status: 'valid' | 'warning' | 'fatal_error';
+  messages: string[];
+}
+
+export interface ImportExecutionReport {
+  batchId: string;
+  workflow: ImportWorkflowType;
+  totalRows: number;
+  processedCount: number;
+  createdCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  timestamp: string;
 }
 
 export interface SportsBulkEnquiry {

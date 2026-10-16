@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Product, 
   Order, 
@@ -7,12 +7,18 @@ import {
   StoreSettings, 
   OrderStatus,
   ProductCategory,
-  SportsBulkEnquiry
+  SportsBulkEnquiry,
+  Department,
+  StockMovement
 } from '../types';
-import { StorageService } from '../services/storage';
+import { StorageService, rupeesToPaise, paiseToRupees } from '../services/storage';
 import { formatINR, exportProductsToCSV, getWhatsAppOrderUrl, getWhatsAppBooklistUrl } from '../utils/helpers';
 import { CATEGORIES } from '../data/categories';
 import { SPORTS_CATEGORIES } from '../data/sportsCategories';
+import { SpreadsheetImportEngine } from '../components/admin/SpreadsheetImportEngine';
+import { StockAuditLedgerView } from '../components/admin/StockAuditLedgerView';
+import { ReorderAlertsView } from '../components/admin/ReorderAlertsView';
+import { BarcodeQuickAdjustModal } from '../components/admin/BarcodeQuickAdjustModal';
 import { 
   ShieldCheck, 
   Lock, 
@@ -37,7 +43,15 @@ import {
   Eye,
   Check,
   Trophy,
-  Users
+  Users,
+  Scan,
+  MapPin,
+  Sparkles,
+  SlidersHorizontal,
+  FileText,
+  AlertCircle,
+  BookOpen,
+  Tag
 } from 'lucide-react';
 
 interface AdminPageProps {
@@ -59,15 +73,35 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   onRefreshData,
   onNavigate
 }) => {
-  // Authentication State
+  // Authentication State (Required: Admin ID = Rahu1819, Password = Ritadevi@181920)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('spsb_admin_auth') === 'true';
   });
+  const [adminIdInput, setAdminIdInput] = useState<string>(() => {
+    return sessionStorage.getItem('spsb_admin_id') || 'Rahu1819';
+  });
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [loginError, setLoginError] = useState<string>('');
+  const [adminUser, setAdminUser] = useState<string>(() => {
+    return sessionStorage.getItem('spsb_admin_id') || 'Rahu1819';
+  });
 
-  // Admin Active Tab
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'sports' | 'orders' | 'booklists' | 'settings'>('overview');
+  // Admin Active Tab (includes universal inventory, import engine, reorder alerts, and audit ledger)
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'products' | 'import-engine' | 'reorder-alerts' | 'audit-logs' | 'sports' | 'orders' | 'booklists' | 'settings'>('overview');
+  
+  // Barcode / Fast POS modal state
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+
+  // Stock movements ledger state
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>(() => StorageService.getStockMovements());
+
+  useEffect(() => {
+    const handleMovementsUpdate = () => {
+      setStockMovements(StorageService.getStockMovements());
+    };
+    window.addEventListener('spsb_movements_updated', handleMovementsUpdate);
+    return () => window.removeEventListener('spsb_movements_updated', handleMovementsUpdate);
+  }, []);
   const [sportsSubTab, setSportsSubTab] = useState<'bulk-enquiries' | 'inventory' | 'categories'>('bulk-enquiries');
   const [sportsEnquiries, setSportsEnquiries] = useState<SportsBulkEnquiry[]>(() => StorageService.getSportsBulkEnquiries());
   const [customSportsCategories, setCustomSportsCategories] = useState<any[]>(() => StorageService.getCustomSportsCategories());
@@ -89,17 +123,49 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
 
-  // Product Add / Edit Modal
+  // Product Add / Edit Modal State (Universal Schema + Dynamic Dept Attributes)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [productModalTab, setProductModalTab] = useState<'core' | 'department'>('core');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  // Universal Core Form Fields
+  const [formSku, setFormSku] = useState('');
   const [formName, setFormName] = useState('');
+  const [formDepartment, setFormDepartment] = useState<Department>('Books');
   const [formCategory, setFormCategory] = useState<ProductCategory>('school-ncert');
+  const [formSubcategory, setFormSubcategory] = useState('');
   const [formPrice, setFormPrice] = useState<number>(150);
   const [formMrp, setFormMrp] = useState<number>(150);
-  const [formStock, setFormStock] = useState<number>(20);
+  const [formCostPrice, setFormCostPrice] = useState<number>(115);
+  const [formStock, setFormStock] = useState<number>(25);
+  const [formMinStockThreshold, setFormMinStockThreshold] = useState<number>(5);
+  const [formTaxRate, setFormTaxRate] = useState<number>(0);
+  const [formStorageLocation, setFormStorageLocation] = useState('Rack-B1');
+  const [formStatus, setFormStatus] = useState<'Active' | 'Draft' | 'Archived'>('Active');
   const [formBrand, setFormBrand] = useState('');
   const [formImage, setFormImage] = useState('');
   const [formDescription, setFormDescription] = useState('');
+
+  // Dynamic Department Fields: Books
+  const [formIsbn, setFormIsbn] = useState('');
+  const [formPublisher, setFormPublisher] = useState('');
+  const [formAuthor, setFormAuthor] = useState('');
+  const [formClassGrade, setFormClassGrade] = useState('');
+  const [formBoard, setFormBoard] = useState<'NCERT / CBSE' | 'Bihar Board' | 'ICSE' | 'General'>('NCERT / CBSE');
+  const [formSubject, setFormSubject] = useState('');
+  const [formEditionYear, setFormEditionYear] = useState('2026');
+
+  // Dynamic Department Fields: Stationery
+  const [formPackSize, setFormPackSize] = useState('');
+  const [formItemColor, setFormItemColor] = useState('');
+  const [formRuling, setFormRuling] = useState('Ruled');
+  const [formDimensions, setFormDimensions] = useState('');
+
+  // Dynamic Department Fields: Sports
+  const [formSportName, setFormSportName] = useState('');
+  const [formSize, setFormSize] = useState('');
+  const [formMaterial, setFormMaterial] = useState('');
+  const [formPlayingLevel, setFormPlayingLevel] = useState('Tournament');
 
   // Order Details Modal
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
@@ -144,86 +210,217 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     setTimeout(() => setCatAddedSuccess(false), 3000);
   };
 
-  // Handle Login
+  // Handle Login: Strictly enforces Admin ID "Rahu1819" and Password "Ritadevi@181920"
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'admin123' || passwordInput === 'sarswati1990') {
+    const cleanId = adminIdInput.trim();
+    if (cleanId === 'Rahu1819' && passwordInput === 'Ritadevi@181920') {
       setIsAuthenticated(true);
+      setAdminUser('Rahu1819');
       sessionStorage.setItem('spsb_admin_auth', 'true');
+      sessionStorage.setItem('spsb_admin_id', 'Rahu1819');
       setLoginError('');
     } else {
-      setLoginError('Incorrect password. (Default is admin123)');
+      setLoginError('Invalid credentials! Admin ID must be "Rahu1819" and password must be "Ritadevi@181920".');
     }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('spsb_admin_auth');
+    sessionStorage.removeItem('spsb_admin_id');
   };
 
-  // Open Product Modal
-  const handleOpenAddProduct = () => {
+  // Open Product Modal for Creation
+  const handleOpenAddProduct = (defaultDept: Department = 'Books') => {
     setEditingProduct(null);
+    setProductModalTab('core');
+    setFormSku(`SPSB-${defaultDept.slice(0, 2).toUpperCase()}-${Date.now().toString().slice(-4)}`);
     setFormName('');
-    setFormCategory('school-ncert');
+    setFormDepartment(defaultDept);
+    setFormCategory(defaultDept === 'Books' ? 'school-ncert' : defaultDept === 'Sports' ? 'sports-equipment' : 'stationery');
+    setFormSubcategory('');
     setFormPrice(150);
     setFormMrp(150);
+    setFormCostPrice(115);
     setFormStock(25);
+    setFormMinStockThreshold(5);
+    setFormTaxRate(defaultDept === 'Books' ? 0 : defaultDept === 'Sports' ? 12 : 18);
+    setFormStorageLocation(defaultDept === 'Books' ? 'Rack-B1' : defaultDept === 'Sports' ? 'Sports-Bay-1' : 'Shelf-S1');
+    setFormStatus('Active');
     setFormBrand('');
-    setFormImage('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80');
-    setFormDescription('Standard textbook/stationery product for school students.');
+    setFormImage(
+      defaultDept === 'Books'
+        ? 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'
+        : defaultDept === 'Sports'
+        ? 'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=800&q=80'
+        : 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=800&q=80'
+    );
+    setFormDescription('Available at Sarswati Pustak and Sports Bhandar, Pachrukhi, Siwan.');
+    // Dynamic Books
+    setFormIsbn('');
+    setFormPublisher('');
+    setFormAuthor('');
+    setFormClassGrade('');
+    setFormBoard('NCERT / CBSE');
+    setFormSubject('');
+    setFormEditionYear('2026');
+    // Dynamic Stationery
+    setFormPackSize('');
+    setFormItemColor('');
+    setFormRuling('Ruled');
+    setFormDimensions('');
+    // Dynamic Sports
+    setFormSportName('');
+    setFormSize('');
+    setFormMaterial('');
+    setFormPlayingLevel('Tournament');
+
     setIsProductModalOpen(true);
   };
 
+  // Open Product Modal for Editing
   const handleOpenEditProduct = (p: Product) => {
     setEditingProduct(p);
+    setProductModalTab('core');
+    setFormSku(p.sku);
     setFormName(p.name);
+    setFormDepartment(p.department || 'Books');
     setFormCategory(p.category);
+    setFormSubcategory(p.subcategory || '');
     setFormPrice(p.price);
     setFormMrp(p.mrp || p.price);
+    setFormCostPrice(p.costPrice || Math.round(p.price * 0.75));
     setFormStock(p.stock);
+    setFormMinStockThreshold(p.minStockThreshold ?? 5);
+    setFormTaxRate(p.taxRate ?? (p.department === 'Books' ? 0 : 18));
+    setFormStorageLocation(p.storageLocation || 'Rack-B1');
+    setFormStatus(p.status || 'Active');
     setFormBrand(p.brand || '');
-    setFormImage(p.images[0]);
-    setFormDescription(p.description);
+    setFormImage(p.images[0] || '');
+    setFormDescription(p.description || '');
+    // Books
+    setFormIsbn(p.isbn || '');
+    setFormPublisher(p.publisher || '');
+    setFormAuthor(p.author || '');
+    setFormClassGrade(p.classGrade || '');
+    setFormBoard(p.board || 'NCERT / CBSE');
+    setFormSubject(p.subject || '');
+    setFormEditionYear(p.editionYear || '2026');
+    // Stationery
+    setFormPackSize(p.packSize || '');
+    setFormItemColor(p.itemColor || '');
+    setFormRuling(p.ruling || 'Ruled');
+    setFormDimensions(p.dimensions || '');
+    // Sports
+    setFormSportName(p.sportName || '');
+    setFormSize(p.size || '');
+    setFormMaterial(p.material || '');
+    setFormPlayingLevel(p.playingLevel || 'Tournament');
+
     setIsProductModalOpen(true);
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim()) return;
+    if (!formName.trim() || !formSku.trim()) {
+      alert('Product Name and SKU are required.');
+      return;
+    }
+
+    const price = Math.max(0, formPrice);
+    const mrp = Math.max(price, formMrp);
+    const costPrice = Math.max(0, formCostPrice);
 
     if (editingProduct) {
       const updated: Product = {
         ...editingProduct,
-        name: formName,
+        sku: formSku.trim(),
+        name: formName.trim(),
+        department: formDepartment,
         category: formCategory,
-        price: formPrice,
-        mrp: formMrp,
-        stock: formStock,
-        brand: formBrand,
-        images: [formImage, ...editingProduct.images.slice(1)],
-        description: formDescription,
+        subcategory: formSubcategory.trim() || undefined,
+        price,
+        costPrice,
+        mrp,
+        sellingPricePaise: rupeesToPaise(price),
+        costPricePaise: rupeesToPaise(costPrice),
+        mrpPaise: rupeesToPaise(mrp),
+        stock: Math.max(0, Math.floor(formStock)),
+        minStockThreshold: Math.max(0, Math.floor(formMinStockThreshold)),
+        taxRate: formTaxRate,
+        storageLocation: formStorageLocation.trim() || 'Rack-B1',
+        status: formStatus,
+        brand: formBrand.trim() || undefined,
+        images: formImage ? [formImage, ...editingProduct.images.slice(1)] : editingProduct.images,
+        description: formDescription.trim(),
+        // Books
+        isbn: formIsbn.trim() || undefined,
+        publisher: formPublisher.trim() || undefined,
+        author: formAuthor.trim() || undefined,
+        classGrade: formClassGrade.trim() || undefined,
+        board: formBoard,
+        subject: formSubject.trim() || undefined,
+        editionYear: formEditionYear.trim() || undefined,
+        // Stationery
+        packSize: formPackSize.trim() || undefined,
+        itemColor: formItemColor.trim() || undefined,
+        ruling: formRuling.trim() || undefined,
+        dimensions: formDimensions.trim() || undefined,
+        // Sports
+        sportName: formSportName.trim() || undefined,
+        size: formSize.trim() || undefined,
+        material: formMaterial.trim() || undefined,
+        playingLevel: formPlayingLevel.trim() || undefined,
         updatedAt: new Date().toISOString()
       };
-      StorageService.saveProduct(updated);
+      StorageService.saveProduct(updated, adminUser);
     } else {
       const newProd: Product = {
         id: `prod-${Date.now()}`,
-        sku: `SPSB-${Date.now().toString().slice(-4)}`,
-        name: formName,
+        sku: formSku.trim(),
+        name: formName.trim(),
         slug: formName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        department: formDepartment,
         category: formCategory,
-        price: formPrice,
-        mrp: formMrp,
-        stock: formStock,
+        subcategory: formSubcategory.trim() || undefined,
+        price,
+        costPrice,
+        mrp,
+        sellingPricePaise: rupeesToPaise(price),
+        costPricePaise: rupeesToPaise(costPrice),
+        mrpPaise: rupeesToPaise(mrp),
+        stock: Math.max(0, Math.floor(formStock)),
+        minStockThreshold: Math.max(0, Math.floor(formMinStockThreshold)),
+        taxRate: formTaxRate,
+        storageLocation: formStorageLocation.trim() || 'Rack-B1',
+        status: formStatus,
         images: [formImage || 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'],
-        brand: formBrand,
-        description: formDescription,
-        tags: [formCategory, formBrand.toLowerCase()],
+        brand: formBrand.trim() || undefined,
+        description: formDescription.trim(),
+        tags: [formDepartment.toLowerCase(), formCategory, formBrand.toLowerCase()],
+        // Books
+        isbn: formIsbn.trim() || undefined,
+        publisher: formPublisher.trim() || undefined,
+        author: formAuthor.trim() || undefined,
+        classGrade: formClassGrade.trim() || undefined,
+        board: formBoard,
+        subject: formSubject.trim() || undefined,
+        editionYear: formEditionYear.trim() || undefined,
+        // Stationery
+        packSize: formPackSize.trim() || undefined,
+        itemColor: formItemColor.trim() || undefined,
+        ruling: formRuling.trim() || undefined,
+        dimensions: formDimensions.trim() || undefined,
+        // Sports
+        sportName: formSportName.trim() || undefined,
+        size: formSize.trim() || undefined,
+        material: formMaterial.trim() || undefined,
+        playingLevel: formPlayingLevel.trim() || undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      StorageService.saveProduct(newProd);
+      StorageService.saveProduct(newProd, adminUser);
     }
 
     setIsProductModalOpen(false);
@@ -240,14 +437,33 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   const handleQuickStock = (id: string, delta: number) => {
     const p = products.find(item => item.id === id);
     if (p) {
-      StorageService.updateStock(id, Math.max(0, p.stock + delta));
+      const newStock = Math.max(0, p.stock + delta);
+      const movementType = delta < 0 ? 'Store Sale' : 'Stock Addition (Purchase)';
+      StorageService.updateStockWithMovement(
+        p.sku, 
+        newStock, 
+        movementType, 
+        `Quick adjustment (${delta > 0 ? `+${delta}` : delta} units) on shelf`,
+        undefined,
+        adminUser
+      );
       onRefreshData();
     }
   };
 
   const handleUpdateStock = (id: string, newStock: number) => {
-    StorageService.updateStock(id, Math.max(0, newStock));
-    onRefreshData();
+    const p = products.find(item => item.id === id);
+    if (p) {
+      StorageService.updateStockWithMovement(
+        p.sku, 
+        newStock, 
+        'Manual Adjustment (Damage/Loss)', 
+        'Direct inventory override',
+        undefined,
+        adminUser
+      );
+      onRefreshData();
+    }
   };
 
   // Orders Management
@@ -300,12 +516,24 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   const sportsProducts = products.filter(p => p.category.startsWith('sports-') || p.category === 'sports-equipment' || Boolean(p.sportType));
   const pendingSportsQuotes = sportsEnquiries.filter(e => e.status === 'pending');
 
+  // Inventory Department Filter State
+  const [inventoryDeptFilter, setInventoryDeptFilter] = useState<'All' | Department>('All');
+
   // Filtered lists
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.sku.toLowerCase().includes(productSearch.toLowerCase()) ||
-    (p.brand && p.brand.toLowerCase().includes(productSearch.toLowerCase()))
-  );
+  const filteredProducts = products.filter(p => {
+    const query = productSearch.toLowerCase().trim();
+    const matchesSearch = 
+      !query ||
+      p.name.toLowerCase().includes(query) ||
+      p.sku.toLowerCase().includes(query) ||
+      (p.isbn && p.isbn.toLowerCase().includes(query)) ||
+      (p.brand && p.brand.toLowerCase().includes(query)) ||
+      (p.storageLocation && p.storageLocation.toLowerCase().includes(query));
+
+    const matchesDept = inventoryDeptFilter === 'All' || p.department === inventoryDeptFilter;
+
+    return matchesSearch && matchesDept;
+  });
 
   const filteredOrders = orders.filter(o => {
     const matchesSearch = 
@@ -316,57 +544,96 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     return matchesSearch && matchesStatus;
   });
 
-  // Login Gate
+  // Login Gate: Strictly restricts access to Admin ID "Rahu1819" and Password "Ritadevi@181920"
   if (!isAuthenticated) {
     return (
       <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-700 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-brand-900 text-amber-300 flex items-center justify-center mx-auto shadow-md">
-            <Lock className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl bg-navy text-amber-300 flex items-center justify-center mx-auto shadow-md border border-amber-500/30">
+            <ShieldCheck className="w-8 h-8 text-amber-400" />
           </div>
 
           <div>
+            <div className="inline-block text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 px-3 py-1 rounded-full mb-2">
+              Authorized Store Administration Only
+            </div>
             <h1 className="text-xl font-extrabold text-navy font-heading">
-              Store Owner &amp; Admin Login
+              Sarswati Pustak & Sports Bhandar
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Sarswati Pustak and Sports Bhandar, Pachrukhi
+              Pachrukhi, Siwan, Bihar (PIN: 841241) • IMS Access
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Admin Password
+                Admin ID *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Enter Admin ID (e.g. Rahu1819)"
+                value={adminIdInput}
+                onChange={(e) => setAdminIdInput(e.target.value)}
+                className="w-full text-xs p-3 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Admin Password *
               </label>
               <input
                 type="password"
                 required
-                placeholder="Enter password (default: admin123)"
+                placeholder="Enter Password (e.g. Ritadevi@181920)"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full text-xs p-3 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full text-xs p-3 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
+            {/* Quick Demo Helper Chip for instant validation */}
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Authorized Credentials:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminIdInput('Rahu1819');
+                    setPasswordInput('Ritadevi@181920');
+                  }}
+                  className="text-navy font-bold hover:underline"
+                >
+                  Autofill Credentials
+                </button>
+              </div>
+              <div className="text-[11px] text-slate-600 font-mono mt-1">
+                ID: <strong>Rahu1819</strong> • Pass: <strong>Ritadevi@181920</strong>
+              </div>
+            </div>
+
             {loginError && (
-              <div className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">
-                {loginError}
+              <div className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{loginError}</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-brand-900 hover:bg-brand-800 text-white font-bold text-xs rounded-xl shadow-md transition-colors cursor-pointer"
+              className="w-full py-3 bg-navy hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
-              Sign In to Dashboard
+              <Lock className="w-4 h-4 text-amber-400" />
+              <span>Sign In to Admin Portal</span>
             </button>
           </form>
 
           <div className="pt-2 text-xs text-slate-400">
             <button
               onClick={() => onNavigate('home')}
-              className="text-brand-800 font-semibold hover:underline"
+              className="text-navy font-semibold hover:underline"
             >
               ← Back to Customer Storefront
             </button>
@@ -376,37 +643,52 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     );
   }
 
+  // Count items needing reorder
+  const reorderNeededCount = products.filter(p => p.stock <= (p.minStockThreshold ?? 5)).length;
+
   return (
     <div className="bg-slate-100 min-h-screen">
       
       {/* Admin Top Header */}
       <header className="bg-navy text-white px-6 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-brand-700 text-amber-300 flex items-center justify-center font-bold">
-            <ShieldCheck className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 flex items-center justify-center font-bold">
+            <ShieldCheck className="w-6 h-6 text-amber-400" />
           </div>
           <div>
             <div className="font-extrabold text-sm sm:text-base font-heading flex items-center gap-2">
-              <span>SARSWATI PUSTAK</span>
-              <span className="text-[10px] bg-amber-500 text-navy font-bold px-2 py-0.5 rounded">Store Admin</span>
+              <span>SARSWATI PUSTAK & SPORTS IMS</span>
+              <span className="text-[10px] bg-amber-500 text-navy font-bold px-2 py-0.5 rounded font-mono">
+                Admin: Rahu1819
+              </span>
             </div>
-            <div className="text-[11px] text-slate-300">Pachrukhi, Siwan (841241) Management Console</div>
+            <div className="text-[11px] text-slate-300">Pachrukhi, Siwan (841241) • High-Reliability Inventory System</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Quick Barcode Scanner Trigger Button */}
+          <button
+            onClick={() => setIsBarcodeModalOpen(true)}
+            className="text-xs bg-amber-500 hover:bg-amber-400 text-navy font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition shadow"
+            title="Open Live Barcode Gun & Fast POS Adjuster"
+          >
+            <Scan className="w-4 h-4" />
+            <span className="hidden sm:inline">Barcode / POS Scanner</span>
+          </button>
+
           <button
             onClick={() => onNavigate('home')}
-            className="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors"
+            className="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl border border-slate-700 transition"
           >
-            Storefront View ↗
+            Storefront ↗
           </button>
           <button
             onClick={handleLogout}
-            className="text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-950/80 px-3 py-1.5 rounded-lg border border-red-800/50 flex items-center gap-1 transition-colors"
+            className="text-xs text-red-300 hover:text-white bg-red-950/60 hover:bg-red-900 px-3 py-2 rounded-xl border border-red-800/60 flex items-center gap-1.5 transition"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </header>
@@ -415,10 +697,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-1.5 bg-white p-2 rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto">
           {[
             { id: 'overview', label: 'Dashboard Overview', icon: <Package className="w-4 h-4" /> },
-            { id: 'products', label: `Products (${products.length})`, icon: <ShoppingBag className="w-4 h-4" /> },
+            { id: 'inventory', label: `Universal Inventory (${products.length})`, icon: <ShoppingBag className="w-4 h-4" /> },
+            { id: 'import-engine', label: 'Spreadsheet Import & Export', icon: <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> },
+            { 
+              id: 'reorder-alerts', 
+              label: 'Reorder Alerts', 
+              icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+              badge: reorderNeededCount > 0 ? `${reorderNeededCount} low` : undefined,
+              badgeClass: 'bg-red-500 text-white'
+            },
+            { id: 'audit-logs', label: `Audit Ledger (${stockMovements.length})`, icon: <FileText className="w-4 h-4 text-blue-600" /> },
             { 
               id: 'sports', 
               label: `Sports Dept (${sportsProducts.length})`, 
@@ -426,27 +717,30 @@ export const AdminPage: React.FC<AdminPageProps> = ({
               badge: pendingSportsQuotes.length > 0 ? `${pendingSportsQuotes.length} quotes` : undefined
             },
             { id: 'orders', label: `Orders (${orders.length})`, icon: <IndianRupee className="w-4 h-4" /> },
-            { id: 'booklists', label: `Booklist Requests (${booklistRequests.length})`, icon: <FileSpreadsheet className="w-4 h-4" /> },
+            { id: 'booklists', label: `Booklists (${booklistRequests.length})`, icon: <FileSpreadsheet className="w-4 h-4" /> },
             { id: 'settings', label: 'Store Settings', icon: <Settings className="w-4 h-4" /> }
-          ].map((tab: any) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? 'bg-brand-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-              {tab.badge && (
-                <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded-full font-extrabold animate-pulse">
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
+          ].map((tab: any) => {
+            const isActive = activeTab === tab.id || (tab.id === 'inventory' && activeTab === 'products');
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs transition cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-navy text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${tab.badgeClass || 'bg-amber-500 text-navy'}`}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB 1: OVERVIEW & KPIS */}
@@ -550,122 +844,261 @@ export const AdminPage: React.FC<AdminPageProps> = ({
           </div>
         )}
 
-        {/* TAB 2: PRODUCTS CATALOGUE CRUD */}
-        {activeTab === 'products' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-5">
+        {/* TAB 2: UNIVERSAL INVENTORY MANAGEMENT SYSTEM (IMS) */}
+        {(activeTab === 'inventory' || activeTab === 'products') && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
             
+            {/* Header & Department Switcher Bar */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="font-extrabold text-lg text-navy font-heading flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-amber-500" />
+                  <span>Universal Catalog &amp; Stock Manager</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Real-time inventory with decimal-safe paise calculations, shelf tags, and instant barcode counter adjustments.
+                </p>
+              </div>
+
+              {/* Department Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                {[
+                  { id: 'All', label: `All (${products.length})` },
+                  { id: 'Books' as Department, label: `Books (${products.filter(p => p.department === 'Books').length})` },
+                  { id: 'Stationery' as Department, label: `Stationery (${products.filter(p => p.department === 'Stationery').length})` },
+                  { id: 'Sports' as Department, label: `Sports (${products.filter(p => p.department === 'Sports').length})` }
+                ].map(dept => (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    onClick={() => setInventoryDeptFilter(dept.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${inventoryDeptFilter === dept.id ? 'bg-navy text-white shadow-xs' : 'text-slate-600 hover:text-navy hover:bg-white/60'}`}
+                  >
+                    {dept.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
                 <input
                   type="text"
-                  placeholder="Search products by title, SKU, brand..."
+                  placeholder="Search by title, SKU, barcode, ISBN, shelf tag, brand..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:border-navy"
                 />
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={handleExportCSV}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
-                  title="Export to CSV"
+                  type="button"
+                  onClick={() => setIsBarcodeModalOpen(true)}
+                  className="bg-amber-500 hover:bg-amber-400 text-navy text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-xs"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export CSV</span>
+                  <Scan className="w-4 h-4" />
+                  <span>Scan Barcode</span>
                 </button>
 
                 <button
-                  onClick={handleOpenAddProduct}
-                  className="bg-brand-900 hover:bg-brand-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+                  type="button"
+                  onClick={() => setActiveTab('import-engine')}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition"
                 >
-                  <Plus className="w-4 h-4" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Bulk Import</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenAddProduct(inventoryDeptFilter === 'All' ? 'Books' : inventoryDeptFilter)}
+                  className="bg-navy hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-xs"
+                >
+                  <Plus className="w-4 h-4 text-amber-400" />
                   <span>Add Product</span>
                 </button>
               </div>
             </div>
 
-            {/* Products Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
-                <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+            {/* Universal Products Table */}
+            <div className="border border-slate-200 rounded-2xl overflow-x-auto shadow-xs">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
                   <tr>
-                    <th className="p-3">Product</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Price / MRP</th>
-                    <th className="p-3">Stock Level</th>
-                    <th className="p-3 text-right">Actions</th>
+                    <th className="py-3 px-3">Product / Identifier</th>
+                    <th className="py-3 px-3">Dept &amp; Shelf</th>
+                    <th className="py-3 px-3">Selling Price</th>
+                    <th className="py-3 px-3">Cost / MRP</th>
+                    <th className="py-3 px-3 text-center">Stock Quantity</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredProducts.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50">
-                      <td className="p-3">
-                        <div className="flex items-center gap-2.5">
-                          <img 
-                            src={p.images[0]} 
-                            alt="" 
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=100&q=80';
-                            }}
-                            className="w-10 h-10 object-cover rounded-lg border border-slate-200" 
-                          />
-                          <div>
-                            <div className="font-bold text-slate-900">{p.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">SKU: {p.sku} {p.brand && `• ${p.brand}`}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-3 capitalize text-slate-600">{p.category.replace(/-/g, ' ')}</td>
-                      <td className="p-3 font-semibold text-navy">
-                        {formatINR(p.price)}
-                        {p.mrp && <span className="text-slate-400 line-through ml-1 text-[10px]">{formatINR(p.mrp)}</span>}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-bold ${p.stock < 10 ? 'text-red-600' : 'text-slate-800'}`}>
-                            {p.stock} units
-                          </span>
-                          <div className="flex items-center border border-slate-200 rounded-md overflow-hidden bg-white">
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map((p) => {
+                      const isLow = p.stock <= (p.minStockThreshold ?? 5);
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50 transition">
+                          {/* Product Name & Identifiers */}
+                          <td className="py-3 px-3 max-w-sm">
+                            <div className="flex items-start gap-2.5">
+                              <img 
+                                src={p.images[0]} 
+                                alt="" 
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=100&q=80';
+                                }}
+                                className="w-11 h-11 object-cover rounded-lg border border-slate-200 shrink-0 mt-0.5" 
+                              />
+                              <div>
+                                <div className="font-bold text-slate-900 leading-snug">{p.name}</div>
+                                <div className="text-[11px] text-slate-500 font-mono mt-0.5 flex flex-wrap items-center gap-1.5">
+                                  <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded">
+                                    {p.sku}
+                                  </span>
+                                  {p.isbn && <span>ISBN: {p.isbn}</span>}
+                                  {p.brand && <span>• {p.brand}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Dept & Shelf Tag */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-navy text-white block w-fit mb-1">
+                              {p.department || 'Books'}
+                            </span>
+                            {p.storageLocation ? (
+                              <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1 w-fit">
+                                <MapPin className="w-3 h-3 text-amber-600" />
+                                {p.storageLocation}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">No Shelf Tag</span>
+                            )}
+                          </td>
+
+                          {/* Selling Price */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <div className="font-extrabold text-navy text-sm">
+                              {formatINR(p.price)}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {p.sellingPricePaise ?? Math.round(p.price * 100)} paise
+                            </div>
+                          </td>
+
+                          {/* Cost Price & MRP */}
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <div className="text-slate-600 font-medium">
+                              Cost: <strong>{formatINR(p.costPrice ?? Math.round(p.price * 0.75))}</strong>
+                            </div>
+                            {p.mrp && p.mrp > p.price && (
+                              <div className="text-[11px] text-slate-400 line-through">
+                                MRP: {formatINR(p.mrp)}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Stock Level with +/- counter */}
+                          <td className="py-3 px-3 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className={`font-black text-sm ${isLow ? 'text-red-600' : 'text-slate-800'}`}>
+                                {p.stock}
+                              </span>
+                              {isLow && (
+                                <span className="text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.2 rounded-full">
+                                  Low
+                                </span>
+                              )}
+                              <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white shadow-2xs ml-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickStock(p.id, -1)}
+                                  className="px-2 py-0.5 hover:bg-slate-100 text-slate-700 font-black border-r border-slate-200 transition"
+                                  title="Sell 1 Unit (Store Sale)"
+                                >
+                                  -
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickStock(p.id, 1)}
+                                  className="px-2 py-0.5 hover:bg-slate-100 text-emerald-700 font-black transition"
+                                  title="Add 1 Unit (Purchase)"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              Alert at &le; {p.minStockThreshold ?? 5}
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3 px-3 text-right whitespace-nowrap space-x-1">
                             <button
-                              onClick={() => handleQuickStock(p.id, -1)}
-                              className="px-1.5 py-0.5 hover:bg-slate-100 font-bold"
+                              type="button"
+                              onClick={() => handleOpenEditProduct(p)}
+                              className="p-2 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-navy transition"
+                              title="Edit Product & Attributes"
                             >
-                              -
+                              <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => handleQuickStock(p.id, 1)}
-                              className="px-1.5 py-0.5 hover:bg-slate-100 font-bold"
+                              type="button"
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="p-2 rounded-lg bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-600 transition"
+                              title="Delete Product"
                             >
-                              +
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-3 text-right space-x-1">
-                        <button
-                          onClick={() => handleOpenEditProduct(p)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-900"
-                          title="Edit Product"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(p.id, p.name)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                        No products match your search or department filter.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
+        )}
+
+        {/* TAB 3: SPREADSHEET IMPORT & EXPORT ENGINE */}
+        {activeTab === 'import-engine' && (
+          <SpreadsheetImportEngine 
+            products={products} 
+            onImportComplete={onRefreshData} 
+            adminUser={adminUser} 
+          />
+        )}
+
+        {/* TAB 4: REORDER ALERTS & LOW STOCK VIEW */}
+        {activeTab === 'reorder-alerts' && (
+          <ReorderAlertsView
+            products={products}
+            onRefresh={onRefreshData}
+            onOpenQuickAdjust={handleOpenEditProduct}
+            adminUser={adminUser}
+          />
+        )}
+
+        {/* TAB 5: STOCK AUDIT LEDGER */}
+        {activeTab === 'audit-logs' && (
+          <StockAuditLedgerView
+            movements={stockMovements}
+            onRefresh={() => setStockMovements(StorageService.getStockMovements())}
+            adminUser={adminUser}
+          />
         )}
 
         {/* TAB: SPORTS DEPARTMENT ADMINISTRATION */}
@@ -892,7 +1325,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={handleOpenAddProduct}
+                      onClick={() => handleOpenAddProduct('Sports')}
                       className="bg-brand-900 hover:bg-brand-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
                     >
                       <Plus className="w-4 h-4" />
@@ -1429,124 +1862,545 @@ export const AdminPage: React.FC<AdminPageProps> = ({
 
       </div>
 
-      {/* Add / Edit Product Modal */}
+      {/* Add / Edit Product Modal with Dynamic Department Tabs */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl border border-slate-200">
-            <h3 className="font-extrabold text-base text-navy font-heading">
-              {editingProduct ? 'Edit Store Product' : 'Add New Product to Store'}
-            </h3>
-
-            <form onSubmit={handleSaveProduct} className="space-y-3 text-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-2xl w-full space-y-5 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Product Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
-                />
+                <h3 className="font-extrabold text-lg text-navy font-heading flex items-center gap-2">
+                  <Package className="w-5 h-5 text-amber-500" />
+                  <span>{editingProduct ? 'Edit Catalog Product (IMS)' : 'Add New Product to Store Inventory'}</span>
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Universal catalog schema with dual decimal/paise integer persistence and department metadata.
+                </p>
               </div>
+              <button 
+                type="button"
+                onClick={() => setIsProductModalOpen(false)} 
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              >
+                ✕
+              </button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Category</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as ProductCategory)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
-                  >
-                    {CATEGORIES.filter(c => c.id !== 'all').map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+            {/* Modal Tabs: Core vs Department Specifics */}
+            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl shrink-0">
+              <button
+                type="button"
+                onClick={() => setProductModalTab('core')}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${productModalTab === 'core' ? 'bg-white text-navy shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                Core Info &amp; Pricing (Paise Math)
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductModalTab('department')}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 ${productModalTab === 'department' ? 'bg-white text-navy shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                <span>Department Specs ({formDepartment})</span>
+                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded">
+                  Dynamic
+                </span>
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveProduct} className="space-y-4 text-xs overflow-y-auto flex-1 pr-1">
+              
+              {productModalTab === 'core' ? (
+                /* TAB 1: CORE FIELDS */
+                <div className="space-y-4">
+                  
+                  {/* SKU & Department */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        SKU / Barcode Code *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. SPSB-BK-1001"
+                        value={formSku}
+                        onChange={(e) => setFormSku(e.target.value)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-900 focus:outline-none focus:border-navy"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Primary Department *
+                      </label>
+                      <select
+                        value={formDepartment}
+                        onChange={(e) => {
+                          const newDept = e.target.value as Department;
+                          setFormDepartment(newDept);
+                          if (newDept === 'Books') {
+                            setFormCategory('school-ncert');
+                            setFormTaxRate(0);
+                            setFormStorageLocation('Rack-B1');
+                          } else if (newDept === 'Sports') {
+                            setFormCategory('sports-equipment');
+                            setFormTaxRate(12);
+                            setFormStorageLocation('Sports-Bay-1');
+                          } else {
+                            setFormCategory('stationery');
+                            setFormTaxRate(18);
+                            setFormStorageLocation('Shelf-S1');
+                          }
+                        }}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-none focus:border-navy"
+                      >
+                        <option value="Books">Academic &amp; Competitive Examination Books</option>
+                        <option value="Stationery">School &amp; Office Stationery</option>
+                        <option value="Sports">Sports Equipment &amp; Accessories</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Product Title */}
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Product Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. NCERT Science Textbook for Class 10"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900 focus:outline-none focus:border-navy"
+                    />
+                  </div>
+
+                  {/* Category & Subcategory */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Store Category</label>
+                      <select
+                        value={formCategory}
+                        onChange={(e) => setFormCategory(e.target.value as ProductCategory)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
+                      >
+                        {CATEGORIES.filter(c => c.id !== 'all').map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Subcategory / Section</label>
+                      <input
+                        type="text"
+                        value={formSubcategory}
+                        onChange={(e) => setFormSubcategory(e.target.value)}
+                        placeholder="e.g. Class 10, Cricket Bats, Notebooks"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pricing: Selling Price, MRP, Cost Price with Paise sync */}
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <div className="font-bold text-slate-700 flex items-center justify-between">
+                      <span>Pricing &amp; Cost Math</span>
+                      <span className="text-[10px] text-slate-500 font-mono">Dual Rupee (₹) &amp; Paise Sync</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-slate-600 mb-1 font-medium">Selling Price (₹) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          value={formPrice}
+                          onChange={(e) => setFormPrice(parseFloat(e.target.value) || 0)}
+                          className="w-full p-2 bg-white border border-slate-300 rounded-lg font-bold text-navy"
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
+                          = {rupeesToPaise(formPrice)}p
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-600 mb-1 font-medium">MRP (₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formMrp}
+                          onChange={(e) => setFormMrp(parseFloat(e.target.value) || 0)}
+                          className="w-full p-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-800"
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
+                          = {rupeesToPaise(formMrp)}p
+                        </span>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-600 mb-1 font-medium">Cost Price (₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formCostPrice}
+                          onChange={(e) => setFormCostPrice(parseFloat(e.target.value) || 0)}
+                          className="w-full p-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-800"
+                        />
+                        <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
+                          = {rupeesToPaise(formCostPrice)}p
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Inventory Quantities & Alerts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Current Stock *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        required
+                        value={formStock}
+                        onChange={(e) => setFormStock(parseInt(e.target.value) || 0)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-black text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Low-Stock Alert</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formMinStockThreshold}
+                        onChange={(e) => setFormMinStockThreshold(parseInt(e.target.value) || 5)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">GST Tax Rate %</label>
+                      <select
+                        value={formTaxRate}
+                        onChange={(e) => setFormTaxRate(parseInt(e.target.value) || 0)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
+                      >
+                        <option value={0}>0% (Exempt Books)</option>
+                        <option value={5}>5% (Concessional)</option>
+                        <option value={12}>12% (Sports / Stationery)</option>
+                        <option value={18}>18% (Standard)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Shelf / Rack Tag</label>
+                      <input
+                        type="text"
+                        value={formStorageLocation}
+                        onChange={(e) => setFormStorageLocation(e.target.value)}
+                        placeholder="e.g. Rack-B3"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Brand & Status */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Brand / Publisher</label>
+                      <input
+                        type="text"
+                        value={formBrand}
+                        onChange={(e) => setFormBrand(e.target.value)}
+                        placeholder="e.g. NCERT, SG, Classmate, DOMS"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Product Status</label>
+                      <select
+                        value={formStatus}
+                        onChange={(e) => setFormStatus(e.target.value as any)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
+                      >
+                        <option value="Active">Active (Visible in Catalog)</option>
+                        <option value="Draft">Draft (Store counter review)</option>
+                        <option value="Archived">Archived (Discontinued)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Image URL & Description */}
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Image URL</label>
+                    <input
+                      type="url"
+                      value={formImage}
+                      onChange={(e) => setFormImage(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Description</label>
+                    <textarea
+                      rows={2}
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
+                    />
+                  </div>
                 </div>
+              ) : (
+                /* TAB 2: DYNAMIC DEPARTMENT SPECIFIC ATTRIBUTES */
+                <div className="space-y-4">
+                  {formDepartment === 'Books' && (
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-200 space-y-3">
+                      <div className="font-bold text-blue-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-blue-700" />
+                        <span>Academic &amp; Competitive Examination Book Metadata</span>
+                      </div>
 
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Brand / Publisher</label>
-                  <input
-                    type="text"
-                    value={formBrand}
-                    onChange={(e) => setFormBrand(e.target.value)}
-                    placeholder="e.g. NCERT / Classmate / SG"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
-                  />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">ISBN Number</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 978-8174506399"
+                            value={formIsbn}
+                            onChange={(e) => setFormIsbn(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Publisher</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. NCERT New Delhi, BSTBPC Patna"
+                            value={formPublisher}
+                            onChange={(e) => setFormPublisher(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Author / Editor</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. NCERT Editorial Board"
+                            value={formAuthor}
+                            onChange={(e) => setFormAuthor(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Class / Grade</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Class 10, Class 12, Competitive"
+                            value={formClassGrade}
+                            onChange={(e) => setFormClassGrade(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Education Board</label>
+                          <select
+                            value={formBoard}
+                            onChange={(e) => setFormBoard(e.target.value as any)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold"
+                          >
+                            <option value="NCERT / CBSE">NCERT / CBSE</option>
+                            <option value="Bihar Board">Bihar State Board (BSEB)</option>
+                            <option value="ICSE">ICSE</option>
+                            <option value="General">General / Competitive</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Subject</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Mathematics, Science, Sanskrit"
+                            value={formSubject}
+                            onChange={(e) => setFormSubject(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Edition Year</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2026-27"
+                            value={formEditionYear}
+                            onChange={(e) => setFormEditionYear(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {formDepartment === 'Stationery' && (
+                    <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-200 space-y-3">
+                      <div className="font-bold text-purple-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Tag className="w-4 h-4 text-purple-700" />
+                        <span>School &amp; Office Stationery Attributes</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Pack Size / Units</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Pack of 5, Box of 20, Single"
+                            value={formPackSize}
+                            onChange={(e) => setFormPackSize(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Item / Ink Color</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Blue, Black, Neon Assorted"
+                            value={formItemColor}
+                            onChange={(e) => setFormItemColor(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Ruling Type</label>
+                          <select
+                            value={formRuling}
+                            onChange={(e) => setFormRuling(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold"
+                          >
+                            <option value="Ruled">Single Ruled</option>
+                            <option value="Plain">Plain / Blank</option>
+                            <option value="Interleaf">Interleaf (Science Practical)</option>
+                            <option value="Four Line">Four Line (English Nursery-2)</option>
+                            <option value="Square Ruled">Square Ruled (Maths)</option>
+                            <option value="N/A">N/A</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Dimensions / Size</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. A4 (210 x 297 mm), Long Book 24x18cm"
+                            value={formDimensions}
+                            onChange={(e) => setFormDimensions(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {formDepartment === 'Sports' && (
+                    <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200 space-y-3">
+                      <div className="font-bold text-emerald-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Trophy className="w-4 h-4 text-emerald-700" />
+                        <span>Sports Equipment, Variants &amp; Materials</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Sport Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Cricket, Football, Badminton"
+                            value={formSportName}
+                            onChange={(e) => setFormSportName(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Size Variant</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Size 5, Short Handle, UK 8, Standard G4"
+                            value={formSize}
+                            onChange={(e) => setFormSize(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Material Composition</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Kashmir Willow, English Willow, PU, Nylon"
+                            value={formMaterial}
+                            onChange={(e) => setFormMaterial(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Playing Level</label>
+                          <select
+                            value={formPlayingLevel}
+                            onChange={(e) => setFormPlayingLevel(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-bold"
+                          >
+                            <option value="Beginner">Beginner / School Training</option>
+                            <option value="Club">Club Level</option>
+                            <option value="Tournament">Tournament / Match Grade</option>
+                            <option value="Professional">Professional Grade</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Selling Price (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    value={formPrice}
-                    onChange={(e) => setFormPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">MRP (₹)</label>
-                  <input
-                    type="number"
-                    value={formMrp}
-                    onChange={(e) => setFormMrp(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Stock Quantity</label>
-                  <input
-                    type="number"
-                    value={formStock}
-                    onChange={(e) => setFormStock(parseInt(e.target.value) || 0)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={formImage}
-                  onChange={(e) => setFormImage(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
+              {/* Submit Buttons */}
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-between shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsProductModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 hover:text-slate-900"
+                  className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-brand-900 text-white font-bold px-5 py-2 rounded-xl"
+                  className="bg-navy hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition"
                 >
-                  Save Product
+                  Save to Inventory &amp; Ledger
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
+
+      {/* Live Barcode Gun & POS Quick Stock Adjuster Modal */}
+      <BarcodeQuickAdjustModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        products={products}
+        onStockUpdated={onRefreshData}
+        adminUser={adminUser}
+      />
 
       {/* Order Details Modal */}
       {viewingOrder && (

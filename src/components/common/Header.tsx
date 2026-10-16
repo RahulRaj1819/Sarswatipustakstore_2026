@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBooklist,
   onOpenProductModal
 }) => {
-  const { theme, toggleTheme, language, toggleLanguage, t } = useApp();
+  const { theme, toggleTheme, language, setLanguage, toggleLanguage, t } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isBooksDropdownOpen, setIsBooksDropdownOpen] = useState(false);
@@ -123,17 +123,17 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base sm:text-lg lg:text-xl tracking-tight text-navy dark:text-white font-heading leading-tight group-hover:text-brand-800 dark:group-hover:text-amber-300 transition-colors">
+                <span className="font-extrabold text-sm sm:text-lg lg:text-xl tracking-tight text-navy dark:text-white font-heading leading-tight group-hover:text-brand-800 dark:group-hover:text-amber-300 transition-colors line-clamp-1">
                   {t('brand.name')}
                 </span>
                 <span className="hidden sm:inline-block text-[11px] font-bold text-accent-orange bg-orange-50 dark:bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-200 dark:border-orange-800/80">
                   {t('brand.est')}
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium tracking-wide flex items-center gap-1">
+              <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-medium tracking-wide flex items-center gap-1">
                 <span>{t('brand.sub')}</span>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="text-brand-700 dark:text-brand-400 font-semibold">{t('brand.location')}</span>
+                <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+                <span className="text-brand-700 dark:text-brand-400 font-semibold hidden sm:inline">{t('brand.location')}</span>
               </p>
             </div>
           </div>
@@ -277,11 +277,11 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden lg:inline">Track Order</span>
             </button>
 
-            {/* Wishlist */}
+            {/* Wishlist (hidden on xs mobile as it is in bottom nav) */}
             <button
               onClick={() => onNavigate('wishlist')}
-              title="My Wishlist"
-              className="p-2 text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-xl relative transition-colors"
+              title={t('nav.wishlist')}
+              className="hidden sm:flex p-2 text-slate-700 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 rounded-xl relative transition-colors"
             >
               <Heart className="w-5 h-5" />
               {wishlistCount > 0 && (
@@ -294,11 +294,11 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Cart Drawer Trigger */}
             <button
               onClick={onOpenCart}
-              aria-label="Shopping Cart"
-              className="flex items-center gap-2 bg-brand-50 dark:bg-slate-800 hover:bg-brand-100/80 dark:hover:bg-slate-700/80 text-brand-900 dark:text-slate-100 border border-brand-200/80 dark:border-slate-700 px-3 py-1.5 rounded-xl transition-all cursor-pointer group"
+              aria-label={t('nav.cart')}
+              className="flex items-center gap-1.5 sm:gap-2 bg-brand-50 dark:bg-slate-800 hover:bg-brand-100/80 dark:hover:bg-slate-700/80 text-brand-900 dark:text-slate-100 border border-brand-200/80 dark:border-slate-700 px-2.5 sm:px-3 py-1.5 rounded-xl transition-all cursor-pointer group"
             >
               <div className="relative">
-                <ShoppingCart className="w-5 h-5 text-brand-800 dark:text-amber-400 group-hover:scale-105 transition-transform" />
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-brand-800 dark:text-amber-400 group-hover:scale-105 transition-transform" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-brand-700 dark:bg-accent-orange text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-xs">
                     {cartCount}
@@ -306,16 +306,16 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
               <div className="hidden sm:block text-left text-xs font-semibold">
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold">Cart</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold">{t('nav.cart')}</div>
                 <div className="text-brand-900 dark:text-white">{formatINR(cartTotal)}</div>
               </div>
             </button>
 
-            {/* Account / Admin Portal */}
-            <div className="relative group">
+            {/* Account / Admin Portal (hidden on xs mobile) */}
+            <div className="relative group hidden sm:block">
               <button
                 onClick={() => onNavigate('account')}
-                title="Account / Portal"
+                title={t('nav.account')}
                 className="p-2 text-slate-700 dark:text-slate-300 hover:text-brand-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               >
                 <User className="w-5 h-5" />
@@ -326,9 +326,9 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={toggleLanguage}
               title={language === 'en' ? 'हिंदी में बदलें (Switch to Hindi)' : 'Switch to English'}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-brand-500 text-xs font-extrabold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-brand-500 text-xs font-extrabold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
             >
-              <Globe className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+              <Globe className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
               <span>{language === 'en' ? 'हिंदी' : 'EN'}</span>
             </button>
 
@@ -349,13 +349,13 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <input
               type="text"
-              placeholder="Search NCERT, bat, notebook, pens..."
+              placeholder={t('search.placeholder')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               onFocus={() => {
                 if (window.location.hash !== '#shop') onNavigate('shop');
               }}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 focus:bg-white"
+              className="w-full pl-9 pr-8 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-800 dark:text-white"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             {searchQuery && (
@@ -379,7 +379,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onNavigate('home')}
               className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors rounded-none font-semibold flex items-center gap-1.5"
             >
-              <span>Home</span>
+              <span>{t('nav.home')}</span>
             </button>
 
             <button
@@ -390,7 +390,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors font-semibold flex items-center gap-1.5"
             >
               <Compass className="w-3.5 h-3.5 text-brand-300" />
-              <span>Shop All Products</span>
+              <span>{t('nav.shop')}</span>
             </button>
 
             {/* Academic Books Dropdown */}
@@ -407,7 +407,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold"
               >
                 <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
-                <span>Academic &amp; School Books</span>
+                <span>{t('cat.academic')}</span>
                 <ChevronDown className="w-3 h-3 opacity-75" />
               </button>
               {isBooksDropdownOpen && (
@@ -532,7 +532,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors flex items-center gap-1 font-semibold text-amber-300"
               >
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span>Sports Department</span>
+                <span>{t('nav.sports')}</span>
                 <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold ml-0.5">
                   11 Cats
                 </span>
@@ -725,7 +725,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className="px-3.5 py-2.5 hover:bg-brand-800 transition-colors font-semibold"
             >
-              <span>Combos &amp; Kits</span>
+              <span>{t('cat.combos')}</span>
             </button>
           </div>
 
@@ -735,14 +735,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onNavigate('about')} 
               className="hover:text-white transition-colors"
             >
-              About Store
+              {t('nav.about')}
             </button>
             <span className="text-brand-700">|</span>
             <button 
               onClick={() => onNavigate('contact')} 
               className="hover:text-white transition-colors"
             >
-              Store Location
+              {t('nav.contact')}
             </button>
             <span className="text-brand-700">|</span>
             <button 
@@ -750,7 +750,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin</span>
+              <span>{t('nav.admin')}</span>
             </button>
           </div>
         </div>
@@ -764,37 +764,70 @@ export const Header: React.FC<HeaderProps> = ({
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
           />
 
-          <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 overflow-y-auto">
+          <div className="relative w-4/5 max-w-xs bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col z-10 overflow-y-auto border-r border-slate-200 dark:border-slate-800 transition-colors">
             {/* Drawer Header */}
-            <div className="p-4 bg-navy text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="p-4 bg-gradient-to-r from-navy to-brand-900 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
                   <BookOpen className="w-4 h-4 text-amber-300" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm">SARSWATI PUSTAK</div>
-                  <div className="text-[10px] text-slate-300">&amp; Sports Bhandar</div>
+                  <div className="font-bold text-sm font-heading">{t('brand.name')}</div>
+                  <div className="text-[10px] text-slate-300">{t('brand.sub')}</div>
                 </div>
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white"
+                aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Language & Theme Switcher in Mobile Drawer */}
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+                <Globe className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <span>{language === 'hi' ? 'भाषा (Language)' : 'Language (भाषा)'}</span>
+              </div>
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setLanguage('en')}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                    language === 'en'
+                      ? 'bg-brand-900 dark:bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage('hi')}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                    language === 'hi'
+                      ? 'bg-brand-900 dark:bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  }`}
+                >
+                  हिंदी
+                </button>
+              </div>
+            </div>
+
             {/* Action Buttons in Mobile Drawer */}
-            <div className="p-3 bg-amber-50 border-b border-amber-200 space-y-2">
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 space-y-2 shrink-0">
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   onOpenBooklist();
                 }}
-                className="w-full bg-accent-orange text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full bg-accent-orange text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span>Get School Booklist Ready</span>
+                <span>{t('btn.orderBooklist')}</span>
               </button>
 
               <button
@@ -802,37 +835,37 @@ export const Header: React.FC<HeaderProps> = ({
                   setIsMobileMenuOpen(false);
                   onNavigate('sports');
                 }}
-                className="w-full bg-gradient-to-r from-slate-900 via-navy to-brand-900 text-amber-300 border border-amber-400/40 text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-between shadow-xs"
+                className="w-full bg-gradient-to-r from-slate-900 via-navy to-brand-900 text-amber-300 border border-amber-400/40 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-between shadow-xs cursor-pointer active:scale-98"
               >
                 <div className="flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-amber-400" />
-                  <span>Sports &amp; Fitness Store</span>
+                  <span>{t('nav.sports')}</span>
                 </div>
                 <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.5 rounded font-extrabold uppercase">
-                  Explore /sports
+                  Explore
                 </span>
               </button>
             </div>
 
             {/* Navigation Categories */}
-            <div className="p-4 flex-1 space-y-1">
+            <div className="p-4 flex-1 space-y-1 overflow-y-auto">
               
               {/* Expandable Sports Categories Section */}
-              <div className="mb-3 pb-3 border-b border-slate-100">
+              <div className="mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsMobileSportsExpanded(!isMobileSportsExpanded)}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-brand-50 text-brand-900 rounded-lg text-xs font-bold"
+                  className="w-full flex items-center justify-between px-3 py-2 bg-brand-50 dark:bg-slate-800 text-brand-900 dark:text-amber-400 rounded-lg text-xs font-bold"
                 >
                   <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-600" />
-                    <span>Sports Categories ({SPORTS_CATEGORIES.length})</span>
+                    <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span>{t('nav.sportsCategories')} ({SPORTS_CATEGORIES.length})</span>
                   </div>
                   <ChevronDown className={`w-4 h-4 transition-transform ${isMobileSportsExpanded ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {isMobileSportsExpanded && (
-                  <div className="mt-1.5 ml-2 pl-3 border-l-2 border-brand-200 space-y-1 py-1">
+                  <div className="mt-1.5 ml-2 pl-3 border-l-2 border-brand-200 dark:border-brand-800 space-y-1 py-1">
                     {SPORTS_CATEGORIES.map((sportCat) => (
                       <button
                         key={sportCat.id}
@@ -841,7 +874,7 @@ export const Header: React.FC<HeaderProps> = ({
                           onNavigate('shop');
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full text-left py-1.5 text-xs text-slate-700 hover:text-brand-700 font-medium flex items-center justify-between"
+                        className="w-full text-left py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between cursor-pointer"
                       >
                         <span>{sportCat.name}</span>
                         <ArrowRight className="w-3 h-3 text-slate-400" />
@@ -851,8 +884,8 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
 
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Books &amp; Stationery
+              <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                {t('nav.booksStationery')}
               </div>
               {CATEGORIES.map((cat) => (
                 <button
@@ -862,80 +895,80 @@ export const Header: React.FC<HeaderProps> = ({
                     onNavigate('shop');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-brand-50 hover:text-brand-900 rounded-lg flex items-center justify-between transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-900 dark:hover:text-white rounded-lg flex items-center justify-between transition-colors cursor-pointer"
                 >
                   <span>{cat.name}</span>
                 </button>
               ))}
 
-              <div className="border-t border-slate-100 my-3 pt-3">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Customer Care &amp; Store
+              <div className="border-t border-slate-100 dark:border-slate-800 my-3 pt-3">
+                <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                  {t('nav.customerCare')}
                 </div>
                 <button
                   onClick={() => {
                     onNavigate('track-order');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 cursor-pointer"
                 >
-                  <PackageCheck className="w-4 h-4 text-brand-600" />
-                  <span>Track My Order</span>
+                  <PackageCheck className="w-4 h-4 text-brand-600 dark:text-amber-400" />
+                  <span>{t('nav.trackOrder')}</span>
                 </button>
                 <button
                   onClick={() => {
                     onNavigate('about');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                 >
-                  About Our Shop (Since 1990)
+                  {t('nav.about')}
                 </button>
                 <button
                   onClick={() => {
                     onNavigate('contact');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                 >
-                  Contact &amp; Store Map
+                  {t('nav.contact')}
                 </button>
                 <button
                   onClick={() => {
                     onNavigate('faq');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                 >
-                  Frequently Asked Questions
+                  {t('nav.faq')}
                 </button>
                 <button
                   onClick={() => {
                     onNavigate('policy-shipping');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
                 >
-                  Shipping &amp; Delivery Policy
+                  {t('nav.shippingPolicy')}
                 </button>
                 <button
                   onClick={() => {
                     onNavigate('admin');
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-amber-700 font-semibold hover:bg-amber-50 rounded-lg flex items-center gap-1.5"
+                  className="w-full text-left px-3 py-2 text-sm text-amber-700 dark:text-amber-400 font-semibold hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-600" />
-                  <span>Admin Dashboard</span>
+                  <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span>{t('nav.admin')}</span>
                 </button>
               </div>
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
-              <div className="font-semibold text-slate-800">Pachrukhi Store Timing:</div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+              <div className="font-semibold text-slate-800 dark:text-slate-200">{t('nav.timing')}:</div>
               <div>{settings.businessHours}</div>
-              <div className="mt-2 text-brand-800 font-bold">Call: {settings.phonePrimary}</div>
+              <div className="mt-2 text-brand-800 dark:text-amber-400 font-bold">{t('nav.call')}: {settings.phonePrimary}</div>
             </div>
           </div>
         </div>

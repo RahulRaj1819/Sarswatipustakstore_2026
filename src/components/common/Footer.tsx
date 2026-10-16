@@ -150,7 +150,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => { onSelectCategory('competitive-exams'); onNavigate('shop'); }}
                   className="hover:text-white transition-colors cursor-pointer text-amber-300 font-semibold"
                 >
-                  Competitive Exam Guides
+                  {t('cat.competitive')}
                 </button>
               </li>
               <li>
@@ -235,10 +235,10 @@ export const Footer: React.FC<FooterProps> = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold underline text-[11px]"
               >
-                <span>Google Maps Location ↗</span>
+                <span>{language === 'hi' ? 'गूगल मैप्स लोकेशन ↗' : 'Google Maps Location ↗'}</span>
               </a>
               <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-900">
-                Pachrukhi Railway Station: ~500m
+                {language === 'hi' ? 'पचरुखी रेलवे स्टेशन: ~500 मी.' : 'Pachrukhi Railway Station: ~500m'}
               </div>
             </div>
           </div>

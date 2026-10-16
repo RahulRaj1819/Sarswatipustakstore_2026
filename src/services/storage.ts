@@ -8,7 +8,11 @@ import {
   Coupon, 
   UserAccount,
   OrderStatus,
-  SportsBulkEnquiry
+  SportsBulkEnquiry,
+  StockMovement,
+  StockMovementType,
+  Department,
+  ImportWorkflowType
 } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 
@@ -24,8 +28,106 @@ const STORAGE_KEYS = {
   SETTINGS: 'spsb_settings_v2',
   COUPONS: 'spsb_coupons_v2',
   USER: 'spsb_user_v2',
-  RECENT_SEARCHES: 'spsb_recent_searches_v2'
+  RECENT_SEARCHES: 'spsb_recent_searches_v2',
+  STOCK_MOVEMENTS: 'spsb_stock_movements_v2'
 };
+
+export const rupeesToPaise = (rupees: number | string): number => {
+  const val = typeof rupees === 'string' ? parseFloat(rupees) : rupees;
+  if (isNaN(val)) return 0;
+  return Math.round(val * 100);
+};
+
+export const paiseToRupees = (paise: number | string): number => {
+  const val = typeof paise === 'string' ? parseInt(paise, 10) : paise;
+  if (isNaN(val)) return 0;
+  return val / 100;
+};
+
+export const getProductDepartment = (product: Partial<Product>): Department => {
+  if (product.department) return product.department;
+  const cat = String(product.category || '').toLowerCase();
+  if (
+    cat === 'school-ncert' || 
+    cat === 'bihar-board' || 
+    cat === 'academic-books' || 
+    cat === 'competitive-exams' || 
+    cat === 'college-reference' ||
+    Boolean(product.isbn) || 
+    Boolean(product.board) || 
+    Boolean(product.publisher)
+  ) {
+    return 'Books';
+  }
+  if (
+    cat.startsWith('sports-') || 
+    cat === 'sports-equipment' || 
+    Boolean(product.sportName) || 
+    Boolean(product.sportType)
+  ) {
+    return 'Sports';
+  }
+  return 'Stationery';
+};
+
+const INITIAL_STOCK_MOVEMENTS: StockMovement[] = [
+  {
+    id: 'mov-seed-001',
+    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+    sku: 'NCERT-SCI-10',
+    productName: 'NCERT Science Textbook for Class 10',
+    department: 'Books',
+    movementType: 'Stock Addition (Purchase)',
+    previousStock: 0,
+    newStock: 50,
+    quantityDelta: 50,
+    note: 'Initial catalog batch delivery from NCERT Patna Wholesaler',
+    referenceId: 'PO-2026-PAT-084',
+    adminUser: 'Rahu1819'
+  },
+  {
+    id: 'mov-seed-002',
+    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+    sku: 'NCERT-SCI-10',
+    productName: 'NCERT Science Textbook for Class 10',
+    department: 'Books',
+    movementType: 'Store Sale',
+    previousStock: 50,
+    newStock: 45,
+    quantityDelta: -5,
+    note: 'Counter sale to Pachrukhi High School students',
+    referenceId: 'POS-REC-10492',
+    adminUser: 'Rahu1819'
+  },
+  {
+    id: 'mov-seed-003',
+    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+    sku: 'SP-CRIC-BAT-01',
+    productName: 'SG Tournament Kashmir Willow Cricket Bat',
+    department: 'Sports',
+    movementType: 'Stock Addition (Purchase)',
+    previousStock: 0,
+    newStock: 18,
+    quantityDelta: 18,
+    note: 'Direct consignment from Jalandhar / SG Sports Distributor',
+    referenceId: 'PO-SG-JAL-4102',
+    adminUser: 'Rahu1819'
+  },
+  {
+    id: 'mov-seed-004',
+    timestamp: new Date(Date.now() - 86400000 * 1).toISOString(),
+    sku: 'DOMS-NEON-KIT',
+    productName: 'DOMS Neon Signature Stationery Kit',
+    department: 'Stationery',
+    movementType: 'Bulk Import Adjustment',
+    previousStock: 0,
+    newStock: 35,
+    quantityDelta: 35,
+    note: 'Spreadsheet initial inventory ingestion',
+    referenceId: 'BATCH-IMP-001',
+    adminUser: 'Rahu1819'
+  }
+];
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'Sarswati Pustak and Sports Bhandar',
@@ -79,15 +181,26 @@ export const StorageService = {
   getProducts: (): Product[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-      if (!data) {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-        return INITIAL_PRODUCTS;
-      }
-      const parsed: Product[] = JSON.parse(data);
+      const rawProducts: Product[] = data ? JSON.parse(data) : INITIAL_PRODUCTS;
       let updated = false;
-      parsed.forEach(prod => {
-        if (prod.images && Array.isArray(prod.images)) {
-          prod.images = prod.images.map(img => {
+
+      const enriched = rawProducts.map(prod => {
+        const dept = getProductDepartment(prod);
+        const costPrice = prod.costPrice ?? Math.round(prod.price * 0.75);
+        const mrp = prod.mrp ?? prod.price;
+        const costPricePaise = prod.costPricePaise ?? rupeesToPaise(costPrice);
+        const sellingPricePaise = prod.sellingPricePaise ?? rupeesToPaise(prod.price);
+        const mrpPaise = prod.mrpPaise ?? rupeesToPaise(mrp);
+        const minStockThreshold = prod.minStockThreshold ?? 5;
+        const taxRate = prod.taxRate ?? (dept === 'Books' ? 0 : dept === 'Sports' ? 12 : 18);
+        const storageLocation = prod.storageLocation ?? (
+          dept === 'Books' ? 'Rack-B2' : dept === 'Sports' ? 'Sports-Bay-1' : 'Shelf-S1'
+        );
+        const status = prod.status ?? 'Active';
+
+        let images = prod.images;
+        if (images && Array.isArray(images)) {
+          images = images.map(img => {
             if (img.includes('photo-1532012164546-f432f2e3777a')) {
               updated = true;
               return img.replace('photo-1532012164546-f432f2e3777a', 'photo-1532094349884-543bc11b234d');
@@ -107,11 +220,40 @@ export const StorageService = {
             return img;
           });
         }
+
+        if (
+          prod.department !== dept ||
+          prod.costPricePaise === undefined ||
+          prod.sellingPricePaise === undefined ||
+          prod.mrpPaise === undefined ||
+          prod.minStockThreshold === undefined ||
+          prod.taxRate === undefined ||
+          prod.storageLocation === undefined ||
+          prod.status === undefined
+        ) {
+          updated = true;
+        }
+
+        return {
+          ...prod,
+          images,
+          department: dept,
+          costPrice,
+          mrp,
+          costPricePaise,
+          sellingPricePaise,
+          mrpPaise,
+          minStockThreshold,
+          taxRate,
+          storageLocation,
+          status
+        };
       });
-      if (updated) {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(parsed));
+
+      if (!data || updated) {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(enriched));
       }
-      return parsed;
+      return enriched;
     } catch {
       return INITIAL_PRODUCTS;
     }
@@ -122,13 +264,70 @@ export const StorageService = {
     return products.find(p => p.id === id || p.slug === id);
   },
 
-  saveProduct: (product: Product): void => {
+  saveProduct: (product: Product, adminUser: string = 'Rahu1819'): void => {
     const products = StorageService.getProducts();
-    const index = products.findIndex(p => p.id === product.id);
+    const index = products.findIndex(p => p.id === product.id || p.sku === product.sku);
+    
+    // Ensure paise synchronization
+    const price = product.price;
+    const mrp = product.mrp ?? product.price;
+    const costPrice = product.costPrice ?? Math.round(price * 0.75);
+    const sellingPricePaise = product.sellingPricePaise ?? rupeesToPaise(price);
+    const costPricePaise = product.costPricePaise ?? rupeesToPaise(costPrice);
+    const mrpPaise = product.mrpPaise ?? rupeesToPaise(mrp);
+    const dept = product.department || getProductDepartment(product);
+
+    const readyProduct: Product = {
+      ...product,
+      department: dept,
+      price,
+      costPrice,
+      mrp,
+      sellingPricePaise,
+      costPricePaise,
+      mrpPaise,
+      minStockThreshold: product.minStockThreshold ?? 5,
+      taxRate: product.taxRate ?? (dept === 'Books' ? 0 : dept === 'Sports' ? 12 : 18),
+      storageLocation: product.storageLocation ?? (dept === 'Books' ? 'Rack-B2' : dept === 'Sports' ? 'Sports-Bay-1' : 'Shelf-S1'),
+      status: product.status ?? 'Active',
+      updatedAt: new Date().toISOString()
+    };
+
     if (index >= 0) {
-      products[index] = { ...product, updatedAt: new Date().toISOString() };
+      const prevStock = products[index].stock;
+      products[index] = readyProduct;
+      // Record stock change if any
+      if (prevStock !== product.stock) {
+        StorageService.addStockMovement({
+          sku: product.sku,
+          productName: product.name,
+          department: dept,
+          movementType: 'Manual Adjustment (Damage/Loss)',
+          previousStock: prevStock,
+          newStock: product.stock,
+          quantityDelta: product.stock - prevStock,
+          note: 'Stock updated via Product Editor',
+          referenceId: `EDT-${Date.now().toString().slice(-6)}`,
+          adminUser
+        });
+      }
     } else {
-      products.unshift({ ...product, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      readyProduct.createdAt = new Date().toISOString();
+      products.unshift(readyProduct);
+      if (product.stock > 0) {
+        StorageService.addStockMovement({
+          sku: product.sku,
+          productName: product.name,
+          department: dept,
+          movementType: 'Stock Addition (Purchase)',
+          previousStock: 0,
+          newStock: product.stock,
+          quantityDelta: product.stock,
+          note: 'Initial stock on product creation',
+          referenceId: `NEW-${Date.now().toString().slice(-6)}`,
+          adminUser
+        });
+      }
     }
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
     window.dispatchEvent(new Event('spsb_products_updated'));
@@ -140,15 +339,259 @@ export const StorageService = {
     window.dispatchEvent(new Event('spsb_products_updated'));
   },
 
-  updateStock: (id: string, newStock: number): void => {
+  updateStock: (id: string, newStock: number, movementType: StockMovementType = 'Manual Adjustment (Damage/Loss)', note?: string, adminUser: string = 'Rahu1819'): void => {
+    StorageService.updateStockWithMovement(id, newStock, movementType, note, undefined, adminUser);
+  },
+
+  updateStockWithMovement: (
+    skuOrId: string, 
+    newStock: number, 
+    movementType: StockMovementType = 'Manual Adjustment (Damage/Loss)', 
+    note?: string, 
+    referenceId?: string, 
+    adminUser: string = 'Rahu1819'
+  ): { product?: Product; movement?: StockMovement } => {
     const products = StorageService.getProducts();
-    const product = products.find(p => p.id === id);
-    if (product) {
-      product.stock = Math.max(0, newStock);
-      product.updatedAt = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-      window.dispatchEvent(new Event('spsb_products_updated'));
+    const product = products.find(p => p.id === skuOrId || p.sku === skuOrId);
+    if (!product) return {};
+
+    const previousStock = product.stock;
+    const validatedNewStock = Math.max(0, Math.floor(newStock));
+    const delta = validatedNewStock - previousStock;
+    product.stock = validatedNewStock;
+    product.updatedAt = new Date().toISOString();
+
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    window.dispatchEvent(new Event('spsb_products_updated'));
+
+    let movement: StockMovement | undefined;
+    if (delta !== 0) {
+      movement = StorageService.addStockMovement({
+        sku: product.sku,
+        productName: product.name,
+        department: product.department || 'Books',
+        movementType,
+        previousStock,
+        newStock: validatedNewStock,
+        quantityDelta: delta,
+        note: note || `Stock updated from ${previousStock} to ${validatedNewStock}`,
+        referenceId: referenceId || `ADJ-${Date.now().toString().slice(-6)}`,
+        adminUser
+      });
     }
+
+    return { product, movement };
+  },
+
+  // Stock Movements & Audit Ledger
+  getStockMovements: (): StockMovement[] => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.STOCK_MOVEMENTS);
+      if (!data) {
+        localStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(INITIAL_STOCK_MOVEMENTS));
+        return INITIAL_STOCK_MOVEMENTS;
+      }
+      return JSON.parse(data);
+    } catch {
+      return INITIAL_STOCK_MOVEMENTS;
+    }
+  },
+
+  addStockMovement: (item: Omit<StockMovement, 'id' | 'timestamp'>): StockMovement => {
+    const movements = StorageService.getStockMovements();
+    const newMovement: StockMovement = {
+      ...item,
+      id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString()
+    };
+    movements.unshift(newMovement);
+    if (movements.length > 1000) movements.splice(1000);
+    localStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(movements));
+    window.dispatchEvent(new Event('spsb_movements_updated'));
+    return newMovement;
+  },
+
+  clearStockMovements: (): void => {
+    localStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify([]));
+    window.dispatchEvent(new Event('spsb_movements_updated'));
+  },
+
+  // Bulk Upsert Products with atomic batches
+  bulkUpsertProducts: (
+    importedProducts: Partial<Product>[],
+    workflow: ImportWorkflowType,
+    batchId: string,
+    adminUser: string = 'Rahu1819'
+  ): { created: number; updated: number; movements: StockMovement[] } => {
+    const currentProducts = StorageService.getProducts();
+    let created = 0;
+    let updated = 0;
+    const movementsToRecord: StockMovement[] = [];
+    const timestamp = new Date().toISOString();
+
+    importedProducts.forEach(item => {
+      if (!item.sku) return;
+      const cleanSku = item.sku.trim();
+      const existingIndex = currentProducts.findIndex(p => p.sku.toLowerCase() === cleanSku.toLowerCase());
+
+      if (existingIndex >= 0) {
+        // Skip existing in 'create_new' mode
+        if (workflow === 'create_new') return;
+
+        const prev = currentProducts[existingIndex];
+        const newStock = item.stock !== undefined ? Math.max(0, Math.floor(Number(item.stock))) : prev.stock;
+        const delta = newStock - prev.stock;
+
+        const sellingPricePaise = item.sellingPricePaise ?? (item.price !== undefined ? rupeesToPaise(item.price) : prev.sellingPricePaise ?? rupeesToPaise(prev.price));
+        const costPricePaise = item.costPricePaise ?? (item.costPrice !== undefined ? rupeesToPaise(item.costPrice) : prev.costPricePaise ?? rupeesToPaise(prev.costPrice ?? prev.price * 0.75));
+        const mrpPaise = item.mrpPaise ?? (item.mrp !== undefined ? rupeesToPaise(item.mrp) : prev.mrpPaise ?? rupeesToPaise(prev.mrp ?? prev.price));
+
+        currentProducts[existingIndex] = {
+          ...prev,
+          name: (workflow === 'full_upsert' && item.name) ? item.name : prev.name,
+          category: (workflow === 'full_upsert' && item.category) ? item.category : prev.category,
+          subcategory: (workflow === 'full_upsert' && item.subcategory) ? item.subcategory : prev.subcategory,
+          department: item.department || prev.department,
+          price: paiseToRupees(sellingPricePaise),
+          costPrice: paiseToRupees(costPricePaise),
+          mrp: paiseToRupees(mrpPaise),
+          sellingPricePaise,
+          costPricePaise,
+          mrpPaise,
+          stock: newStock,
+          minStockThreshold: item.minStockThreshold !== undefined ? Number(item.minStockThreshold) : prev.minStockThreshold,
+          taxRate: item.taxRate !== undefined ? Number(item.taxRate) : prev.taxRate,
+          storageLocation: item.storageLocation ?? prev.storageLocation,
+          status: item.status ?? prev.status,
+          // Books
+          isbn: item.isbn ?? prev.isbn,
+          publisher: item.publisher ?? prev.publisher,
+          author: item.author ?? prev.author,
+          classGrade: item.classGrade ?? prev.classGrade,
+          board: item.board ?? prev.board,
+          subject: item.subject ?? prev.subject,
+          editionYear: item.editionYear ?? prev.editionYear,
+          // Stationery
+          packSize: item.packSize ?? prev.packSize,
+          itemColor: item.itemColor ?? prev.itemColor,
+          ruling: item.ruling ?? prev.ruling,
+          dimensions: item.dimensions ?? prev.dimensions,
+          // Sports
+          sportName: item.sportName ?? prev.sportName,
+          size: item.size ?? prev.size,
+          material: item.material ?? prev.material,
+          playingLevel: item.playingLevel ?? prev.playingLevel,
+          updatedAt: timestamp
+        };
+
+        if (delta !== 0) {
+          movementsToRecord.push({
+            id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            timestamp,
+            sku: prev.sku,
+            productName: prev.name,
+            department: prev.department || 'Books',
+            movementType: 'Bulk Import Adjustment',
+            previousStock: prev.stock,
+            newStock,
+            quantityDelta: delta,
+            note: `Stock updated via spreadsheet bulk import (${workflow})`,
+            referenceId: batchId,
+            adminUser
+          });
+        }
+        updated++;
+      } else {
+        // New Product
+        if (workflow === 'update_stock_prices') return; // Skip in update mode
+
+        const sellingPricePaise = item.sellingPricePaise ?? (item.price !== undefined ? rupeesToPaise(item.price) : 10000);
+        const costPricePaise = item.costPricePaise ?? (item.costPrice !== undefined ? rupeesToPaise(item.costPrice) : Math.round(sellingPricePaise * 0.75));
+        const mrpPaise = item.mrpPaise ?? (item.mrp !== undefined ? rupeesToPaise(item.mrp) : sellingPricePaise);
+        const initialStock = item.stock !== undefined ? Math.max(0, Math.floor(Number(item.stock))) : 0;
+        const dept = item.department || getProductDepartment(item);
+
+        const newProd: Product = {
+          id: item.id || `prod-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          sku: cleanSku,
+          name: item.name || `Product ${cleanSku}`,
+          slug: (item.name || cleanSku).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          department: dept,
+          category: item.category || (dept === 'Books' ? 'school-ncert' : dept === 'Sports' ? 'sports-equipment' : 'stationery'),
+          subcategory: item.subcategory || (dept === 'Books' ? 'General' : dept === 'Sports' ? 'Equipment' : 'Office & School'),
+          description: item.description || `${item.name || cleanSku} available at Sarswati Pustak and Sports Bhandar, Pachrukhi, Siwan.`,
+          price: paiseToRupees(sellingPricePaise),
+          costPrice: paiseToRupees(costPricePaise),
+          mrp: paiseToRupees(mrpPaise),
+          sellingPricePaise,
+          costPricePaise,
+          mrpPaise,
+          stock: initialStock,
+          minStockThreshold: item.minStockThreshold !== undefined ? Number(item.minStockThreshold) : 5,
+          taxRate: item.taxRate !== undefined ? Number(item.taxRate) : (dept === 'Books' ? 0 : dept === 'Sports' ? 12 : 18),
+          storageLocation: item.storageLocation || (dept === 'Books' ? 'Rack-B1' : dept === 'Sports' ? 'Sports-Bay-1' : 'Shelf-S1'),
+          status: item.status || 'Active',
+          images: item.images && item.images.length ? item.images : [
+            dept === 'Books' 
+              ? 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'
+              : dept === 'Sports'
+              ? 'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=800&q=80'
+              : 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=800&q=80'
+          ],
+          brand: item.brand || (dept === 'Books' ? 'NCERT / State Board' : dept === 'Sports' ? 'Authentic Sports' : 'Classmate / DOMS'),
+          isbn: item.isbn,
+          publisher: item.publisher,
+          author: item.author,
+          classGrade: item.classGrade,
+          board: item.board,
+          subject: item.subject,
+          editionYear: item.editionYear,
+          packSize: item.packSize,
+          itemColor: item.itemColor,
+          ruling: item.ruling,
+          dimensions: item.dimensions,
+          sportName: item.sportName,
+          size: item.size,
+          material: item.material,
+          playingLevel: item.playingLevel,
+          tags: [dept.toLowerCase(), (item.name || '').toLowerCase()],
+          createdAt: timestamp,
+          updatedAt: timestamp
+        };
+
+        currentProducts.unshift(newProd);
+
+        if (initialStock > 0) {
+          movementsToRecord.push({
+            id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            timestamp,
+            sku: cleanSku,
+            productName: newProd.name,
+            department: dept,
+            movementType: 'Bulk Import Adjustment',
+            previousStock: 0,
+            newStock: initialStock,
+            quantityDelta: initialStock,
+            note: `Initial stock ingested via bulk spreadsheet import (${workflow})`,
+            referenceId: batchId,
+            adminUser
+          });
+        }
+        created++;
+      }
+    });
+
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(currentProducts));
+    window.dispatchEvent(new Event('spsb_products_updated'));
+
+    if (movementsToRecord.length > 0) {
+      const existingMovements = StorageService.getStockMovements();
+      const updatedMovements = [...movementsToRecord, ...existingMovements].slice(0, 1000);
+      localStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(updatedMovements));
+      window.dispatchEvent(new Event('spsb_movements_updated'));
+    }
+
+    return { created, updated, movements: movementsToRecord };
   },
 
   // Reset to initial catalogue
