@@ -1,0 +1,14 @@
+services:
+  # Preferred and recommended deployment on Render: Static Site (Fast, CDN cached, Free)
+  - type: web
+    name: sarswati-pustak-bhandar
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 20

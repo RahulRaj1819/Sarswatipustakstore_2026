@@ -64,7 +64,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [paymentStep, setPaymentStep] = useState<'details' | 'gateway_test'>('details');
 
   const subtotal = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const deliveryCharge = calculateDeliveryFee(subtotal, fulfilmentType, settings);
+  const deliveryInfo = calculateDeliveryFee(subtotal, fulfilmentType, pinCode, settings);
+  const deliveryCharge = deliveryInfo.fee;
   const totalAmount = subtotal + deliveryCharge;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -87,7 +88,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         return;
       }
 
-      if (!isPinCodeServiceable(pinCode)) {
+      if (!isPinCodeServiceable(pinCode, settings)) {
         setFormError(language === 'hi' ? `पिन कोड ${pinCode} वर्तमान में सीधी होम डिलीवरी क्षेत्र में नहीं है। कृपया स्टोर पिकअप चुनें या सहायता लें।` : `PIN Code ${pinCode} is currently outside our direct home delivery radius. Please select Store Pickup or contact store.`);
         return;
       }
@@ -114,7 +115,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       district,
       state,
       pinCode,
-      landmark: deliveryInstructions
+      deliveryInstructions
     };
 
     const newOrder: Order = {
