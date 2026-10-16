@@ -377,9 +377,122 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Category Mega Bar (Desktop) */}
-      <nav className="hidden lg:block bg-brand-900 text-white text-xs font-medium border-t border-brand-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      {/* Category Mega Bar: Visible on both Desktop and Mobile Lower Part of Header */}
+      <nav className="bg-brand-900 text-white text-xs font-medium border-t border-brand-800">
+        
+        {/* Mobile Horizontal Scroll Strip (Lower Part of Header) */}
+        <div className="lg:hidden flex items-center gap-1.5 px-3 py-2 overflow-x-auto scrollbar-none whitespace-nowrap shadow-inner border-t border-brand-800/60 text-xs">
+          <button
+            type="button"
+            onClick={() => onNavigate('home')}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <Home className="w-3.5 h-3.5 text-brand-300" />
+            <span>{t('nav.home')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCategory('all');
+              onNavigate('shop');
+            }}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <Compass className="w-3.5 h-3.5 text-blue-300" />
+            <span>{t('nav.shop')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCategory('academic-books');
+              onNavigate('shop');
+            }}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
+            <span>{t('cat.academic')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCategory('competitive-exams');
+              onNavigate('shop');
+            }}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-purple-300" />
+            <span>{t('cat.competitive')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCategory('stationery');
+              onNavigate('shop');
+            }}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5 text-teal-300" />
+            <span>{t('cat.stationery')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('sports')}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-amber-300 shadow-2xs cursor-pointer"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>{t('nav.sports')}</span>
+            <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold">
+              11 Cats
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCategory('school-kits');
+              onNavigate('shop');
+            }}
+            className="px-2.5 py-1.5 bg-brand-800/90 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-bold flex items-center gap-1.5 shrink-0 text-white shadow-2xs cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5 text-indigo-300" />
+            <span>{t('cat.combos')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('about')}
+            className="px-2.5 py-1.5 bg-brand-800/60 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-medium flex items-center gap-1.5 shrink-0 text-slate-200 cursor-pointer"
+          >
+            <Info className="w-3.5 h-3.5 text-slate-300" />
+            <span>{t('nav.about')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('contact')}
+            className="px-2.5 py-1.5 bg-brand-800/60 active:bg-brand-700 hover:bg-brand-700 rounded-lg font-medium flex items-center gap-1.5 shrink-0 text-slate-200 cursor-pointer"
+          >
+            <MapPin className="w-3.5 h-3.5 text-emerald-300" />
+            <span>{t('nav.contact')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('admin')}
+            className="px-2.5 py-1.5 bg-amber-500/20 active:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>{t('nav.admin')}</span>
+          </button>
+        </div>
+
+        {/* Desktop Mega Bar */}
+        <div className="hidden lg:flex max-w-7xl mx-auto px-4 sm:px-6 items-center justify-between">
           <div className="flex items-center gap-1">
             
             <button
@@ -796,7 +909,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="p-3 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
                 <Globe className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                <span>{language === 'hi' ? 'भाषा (Language)' : 'Language (भाषा)'}</span>
+                <span>{language === 'hi' ? 'भाषा' : 'Language'}</span>
               </div>
               <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <button
@@ -933,7 +1046,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>NCERT Textbooks (Class 6–12)</span>
+                      <span>{language === 'hi' ? 'एनसीईआरटी पुस्तकें (कक्षा 6–12)' : 'NCERT Textbooks (Class 6–12)'}</span>
                       <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-bold">CBSE</span>
                     </button>
                     <button
@@ -945,7 +1058,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>Bihar Board (Class 1–10 BSTBPC)</span>
+                      <span>{language === 'hi' ? 'बिहार बोर्ड (कक्षा 1–10 BSTBPC)' : 'Bihar Board (Class 1–10 BSTBPC)'}</span>
                       <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">BSEB</span>
                     </button>
                     <button
@@ -957,7 +1070,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>College &amp; Higher Education</span>
+                      <span>{language === 'hi' ? 'कॉलेज और संदर्भ पुस्तकें' : 'College & Higher Education'}</span>
                       <ArrowRight className="w-3 h-3 text-slate-400" />
                     </button>
                   </div>
@@ -1018,7 +1131,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>Classmate Notebooks &amp; Registers</span>
+                      <span>{language === 'hi' ? 'क्लासमेट कॉपियां एवं रजिस्टर्स' : 'Classmate Notebooks & Registers'}</span>
                       <ArrowRight className="w-3 h-3 text-slate-400" />
                     </button>
                     <button
@@ -1030,7 +1143,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>Pens, Highlighters &amp; Pencils</span>
+                      <span>{language === 'hi' ? 'पेन, हाइलाइटर एवं पेंसिल' : 'Pens, Highlighters & Pencils'}</span>
                       <ArrowRight className="w-3 h-3 text-slate-400" />
                     </button>
                     <button
@@ -1042,7 +1155,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>Art Supplies &amp; Project Paper</span>
+                      <span>{language === 'hi' ? 'कला, क्राफ्ट एवं चार्ट पेपर' : 'Art Supplies & Project Paper'}</span>
                       <ArrowRight className="w-3 h-3 text-slate-400" />
                     </button>
                     <button
@@ -1054,7 +1167,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                     >
-                      <span>School Bags &amp; Backpacks</span>
+                      <span>{language === 'hi' ? 'स्कूल बैग एवं वाटर बॉटल' : 'School Bags & Backpacks'}</span>
                       <ArrowRight className="w-3 h-3 text-slate-400" />
                     </button>
                   </div>
@@ -1104,7 +1217,7 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                       <div className="flex items-center gap-1.5">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Visit Full Sports Page (/sports)</span>
+                        <span>{language === 'hi' ? 'संपूर्ण खेल विभाग देखें (/sports)' : 'Visit Full Sports Page (/sports)'}</span>
                       </div>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -1119,7 +1232,7 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className="w-full text-left py-1.5 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                       >
-                        <span>{sportCat.name}</span>
+                        <span>{language === 'hi' ? sportCat.nameHindi : sportCat.name}</span>
                         <ArrowRight className="w-3 h-3 text-slate-400" />
                       </button>
                     ))}

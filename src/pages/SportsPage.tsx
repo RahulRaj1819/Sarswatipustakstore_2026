@@ -325,7 +325,7 @@ export const SportsPage: React.FC<SportsPageProps> = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
                 <span className="absolute bottom-2 left-2 right-2 text-white font-extrabold text-xs sm:text-sm line-clamp-1 font-heading">
-                  {cat.shortName}
+                  {language === 'hi' ? cat.shortNameHindi : cat.shortName}
                 </span>
               </div>
               <div className="p-3 flex-1 flex flex-col justify-between space-y-1.5">
@@ -593,7 +593,7 @@ export const SportsPage: React.FC<SportsPageProps> = ({
                     : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:bg-slate-800'
                 }`}
               >
-                {cat.shortName} ({count})
+                {language === 'hi' ? cat.shortNameHindi : cat.shortName} ({count})
               </button>
             );
           })}

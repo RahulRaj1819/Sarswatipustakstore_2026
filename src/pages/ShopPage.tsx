@@ -197,7 +197,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                   : 'bg-white dark:bg-slate-900 hover:bg-brand-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
               }`}
             >
-              <span>{cat.shortName}</span>
+              <span>{language === 'hi' ? cat.shortNameHindi : cat.shortName}</span>
               {activeCategory === cat.id && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 dark:bg-slate-950"></span>}
             </button>
           ))}
@@ -240,7 +240,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <span>{cat.shortName}</span>
+                    <span>{language === 'hi' ? cat.shortNameHindi : cat.shortName}</span>
                     {activeCategory === cat.id && <span className="w-1.5 h-1.5 rounded-full bg-brand-600 dark:bg-amber-400"></span>}
                   </button>
                 ))}
@@ -266,7 +266,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                         : 'text-slate-600 dark:text-slate-400 hover:bg-amber-50/60 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <span>{cat.shortName}</span>
+                    <span>{language === 'hi' ? cat.shortNameHindi : cat.shortName}</span>
                     {activeCategory === cat.id && <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400"></span>}
                   </button>
                 ))}
@@ -392,7 +392,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                 </span>
                 {activeCategory !== 'all' && (
                   <span className="bg-brand-50 dark:bg-brand-950/60 text-brand-800 dark:text-amber-400 font-bold px-2 py-0.5 rounded-lg border border-brand-200 dark:border-brand-800 flex items-center gap-1">
-                    {activeCategoryInfo?.shortName}
+                    {language === 'hi' ? (activeCategoryInfo as any)?.shortNameHindi || activeCategoryInfo?.name : activeCategoryInfo?.shortName}
                     <X className="w-3 h-3 cursor-pointer" onClick={() => onSelectCategory('all')} />
                   </span>
                 )}
@@ -552,7 +552,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
-                      {c.name}
+                      {language === 'hi' ? c.nameHindi : c.name}
                     </button>
                   ))}
                 </div>

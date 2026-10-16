@@ -13,7 +13,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   onSelectCategory,
   onNavigate
 }) => {
-  const { t } = useApp();
+  const { t, language } = useApp();
   // 8 primary image-led category cards from spec
   const featuredCategories = CATEGORIES.filter(c => c.id !== 'all').slice(0, 8);
 
@@ -82,7 +82,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-slate-50 dark:bg-slate-800/80 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-brand-900 dark:hover:text-white border border-slate-200/90 dark:border-slate-700 transition-all cursor-pointer shadow-2xs shrink-0"
             >
               <span className="text-brand-700 dark:text-amber-400">{getCategoryIcon(cat.id)}</span>
-              <span>{cat.shortName}</span>
+              <span>{language === 'hi' ? cat.shortNameHindi : cat.shortName}</span>
             </button>
           ))}
         </div>
@@ -105,7 +105,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
                 <div className="min-w-0">
                   <h3 className="font-extrabold text-xs sm:text-sm text-navy dark:text-white font-heading group-hover:text-brand-800 dark:group-hover:text-amber-300 transition-colors leading-snug truncate">
-                    {cat.name}
+                    {language === 'hi' ? cat.nameHindi : cat.name}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 leading-normal">
                     {cat.description}
