@@ -18,7 +18,12 @@ import {
   ArrowRight,
   Sun,
   Moon,
-  Globe
+  Globe,
+  Home,
+  MapPin,
+  Info,
+  Layers,
+  FileText
 } from 'lucide-react';
 import { Product, StoreSettings, ProductCategory } from '../../types';
 import { formatINR } from '../../utils/helpers';
@@ -63,6 +68,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [isStationeryDropdownOpen, setIsStationeryDropdownOpen] = useState(false);
   const [isSportsDropdownOpen, setIsSportsDropdownOpen] = useState(false);
   const [isMobileSportsExpanded, setIsMobileSportsExpanded] = useState(false);
+  const [isMobileAcademicExpanded, setIsMobileAcademicExpanded] = useState(false);
+  const [isMobileStationeryExpanded, setIsMobileStationeryExpanded] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -764,7 +771,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
           />
 
-          <div className="relative w-4/5 max-w-xs bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col z-10 overflow-y-auto border-r border-slate-200 dark:border-slate-800 transition-colors">
+          <div className="relative w-[85%] max-w-sm bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col z-10 overflow-y-auto border-r border-slate-200 dark:border-slate-800 transition-colors">
             {/* Drawer Header */}
             <div className="p-4 bg-gradient-to-r from-navy to-brand-900 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
@@ -847,34 +854,270 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            {/* Navigation Categories */}
-            <div className="p-4 flex-1 space-y-1 overflow-y-auto">
+            {/* Navigation: Exact 10 items from the Second Line of Header */}
+            <div className="p-3.5 flex-1 space-y-1.5 overflow-y-auto">
               
-              {/* Expandable Sports Categories Section */}
-              <div className="mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileSportsExpanded(!isMobileSportsExpanded)}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-brand-50 dark:bg-slate-800 text-brand-900 dark:text-amber-400 rounded-lg text-xs font-bold"
-                >
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    <span>{t('nav.sportsCategories')} ({SPORTS_CATEGORIES.length})</span>
+              <div className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
+                <span>{language === 'hi' ? 'मुख्य मेनू (Store Navigation)' : 'Store Navigation'}</span>
+                <span className="text-[10px] text-brand-600 dark:text-amber-400 font-bold">
+                  10 Sections
+                </span>
+              </div>
+
+              {/* 1. Home */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onNavigate('home');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-brand-700 dark:text-amber-400 shrink-0">
+                  <Home className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('nav.home')}</span>
+              </button>
+
+              {/* 2. Shop All Products */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onSelectCategory('all');
+                  onNavigate('shop');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('nav.shop')}</span>
+              </button>
+
+              {/* 3. Academic & School Books (Accordion) */}
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden bg-slate-50/60 dark:bg-slate-800/40">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onSelectCategory('academic-books');
+                      onNavigate('shop');
+                    }}
+                    className="flex-1 text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:text-brand-700 dark:hover:text-amber-400 flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-semibold">{t('cat.academic')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileAcademicExpanded(!isMobileAcademicExpanded)}
+                    aria-label="Expand Academic Books sub-menu"
+                    className="p-2.5 text-slate-400 hover:text-navy dark:hover:text-white cursor-pointer"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileAcademicExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {isMobileAcademicExpanded && (
+                  <div className="px-3 pb-2 pt-1 border-t border-slate-200/80 dark:border-slate-700/80 space-y-1 bg-white dark:bg-slate-900 rounded-b-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('school-ncert');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>NCERT Textbooks (Class 6–12)</span>
+                      <span className="text-[10px] bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-bold">CBSE</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('bihar-board');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>Bihar Board (Class 1–10 BSTBPC)</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">BSEB</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('college-reference');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>College &amp; Higher Education</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                    </button>
                   </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isMobileSportsExpanded ? 'rotate-180' : ''}`} />
-                </button>
-                
+                )}
+              </div>
+
+              {/* 4. Competitive Exam Guides */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onSelectCategory('competitive-exams');
+                  onNavigate('shop');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('cat.competitive')}</span>
+              </button>
+
+              {/* 5. Stationery & Notebooks (Accordion) */}
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden bg-slate-50/60 dark:bg-slate-800/40">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onSelectCategory('stationery');
+                      onNavigate('shop');
+                    }}
+                    className="flex-1 text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:text-brand-700 dark:hover:text-amber-400 flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-semibold">{t('cat.stationery')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileStationeryExpanded(!isMobileStationeryExpanded)}
+                    aria-label="Expand Stationery sub-menu"
+                    className="p-2.5 text-slate-400 hover:text-navy dark:hover:text-white cursor-pointer"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileStationeryExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {isMobileStationeryExpanded && (
+                  <div className="px-3 pb-2 pt-1 border-t border-slate-200/80 dark:border-slate-700/80 space-y-1 bg-white dark:bg-slate-900 rounded-b-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('notebooks');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>Classmate Notebooks &amp; Registers</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('pens-writing');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>Pens, Highlighters &amp; Pencils</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('art-craft');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>Art Supplies &amp; Project Paper</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onSelectCategory('school-bags');
+                        onNavigate('shop');
+                      }}
+                      className="w-full text-left py-2 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
+                    >
+                      <span>School Bags &amp; Backpacks</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 6. Sports Department [11 Cats] (Accordion) */}
+              <div className="rounded-xl border border-amber-300/60 dark:border-amber-900/60 overflow-hidden bg-amber-50/40 dark:bg-amber-950/20">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onNavigate('sports');
+                    }}
+                    className="flex-1 text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:text-brand-700 dark:hover:text-amber-400 flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-950/80 flex items-center justify-center text-accent-orange shrink-0">
+                      <Trophy className="w-4 h-4 text-accent-orange" />
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-semibold">{t('nav.sports')}</span>
+                      <span className="text-[10px] bg-accent-orange text-white px-1.5 py-0.2 rounded font-extrabold">
+                        11 Cats
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileSportsExpanded(!isMobileSportsExpanded)}
+                    aria-label="Expand Sports Categories sub-menu"
+                    className="p-2.5 text-slate-400 hover:text-navy dark:hover:text-white cursor-pointer"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileSportsExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
                 {isMobileSportsExpanded && (
-                  <div className="mt-1.5 ml-2 pl-3 border-l-2 border-brand-200 dark:border-brand-800 space-y-1 py-1">
+                  <div className="px-3 pb-2 pt-1 border-t border-amber-200/70 dark:border-amber-900/60 space-y-1 bg-white dark:bg-slate-900 rounded-b-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onNavigate('sports');
+                      }}
+                      className="w-full text-left py-2 px-2.5 bg-gradient-to-r from-navy to-brand-900 text-amber-300 text-xs font-bold rounded-lg flex items-center justify-between cursor-pointer mb-1 shadow-2xs"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Visit Full Sports Page (/sports)</span>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                     {SPORTS_CATEGORIES.map((sportCat) => (
                       <button
                         key={sportCat.id}
+                        type="button"
                         onClick={() => {
+                          setIsMobileMenuOpen(false);
                           onSelectCategory(sportCat.id);
                           onNavigate('shop');
-                          setIsMobileMenuOpen(false);
                         }}
-                        className="w-full text-left py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-brand-700 dark:hover:text-amber-300 font-medium flex items-center justify-between cursor-pointer"
+                        className="w-full text-left py-1.5 px-2.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-lg font-medium flex items-center justify-between cursor-pointer"
                       >
                         <span>{sportCat.name}</span>
                         <ArrowRight className="w-3 h-3 text-slate-400" />
@@ -884,82 +1127,107 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
 
-              <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                {t('nav.booksStationery')}
-              </div>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    onSelectCategory(cat.id);
-                    onNavigate('shop');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-900 dark:hover:text-white rounded-lg flex items-center justify-between transition-colors cursor-pointer"
-                >
-                  <span>{cat.name}</span>
-                </button>
-              ))}
+              {/* 7. Combos & School Kits */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onSelectCategory('school-kits');
+                  onNavigate('shop');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-navy dark:text-slate-100 hover:bg-brand-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('cat.combos')}</span>
+              </button>
 
+              {/* 8. About Store */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onNavigate('about');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shrink-0">
+                  <Info className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('nav.about')}</span>
+              </button>
+
+              {/* 9. Store Location */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onNavigate('contact');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold">{t('nav.contact')}</span>
+              </button>
+
+              {/* 10. Admin */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onNavigate('admin');
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-xs font-extrabold text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100/80 rounded-xl flex items-center justify-between transition-all cursor-pointer shadow-2xs"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-200/80 dark:bg-amber-900/60 flex items-center justify-center text-amber-800 dark:text-amber-300 shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-bold">{t('nav.admin')}</span>
+                </div>
+                <span className="text-[10px] bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100 px-2 py-0.5 rounded font-mono font-bold">
+                  IMS Portal
+                </span>
+              </button>
+
+              {/* Customer Care Divider Section */}
               <div className="border-t border-slate-100 dark:border-slate-800 my-3 pt-3">
-                <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-1">
                   {t('nav.customerCare')}
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
-                    onNavigate('track-order');
                     setIsMobileMenuOpen(false);
+                    onNavigate('track-order');
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2.5 cursor-pointer font-medium"
                 >
                   <PackageCheck className="w-4 h-4 text-brand-600 dark:text-amber-400" />
                   <span>{t('nav.trackOrder')}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
-                    onNavigate('about');
                     setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                >
-                  {t('nav.about')}
-                </button>
-                <button
-                  onClick={() => {
-                    onNavigate('contact');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                >
-                  {t('nav.contact')}
-                </button>
-                <button
-                  onClick={() => {
                     onNavigate('faq');
-                    setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"
                 >
                   {t('nav.faq')}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
-                    onNavigate('policy-shipping');
                     setIsMobileMenuOpen(false);
+                    onNavigate('policy-shipping');
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer font-medium"
                 >
                   {t('nav.shippingPolicy')}
-                </button>
-                <button
-                  onClick={() => {
-                    onNavigate('admin');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-amber-700 dark:text-amber-400 font-semibold hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg flex items-center gap-1.5 cursor-pointer"
-                >
-                  <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>{t('nav.admin')}</span>
                 </button>
               </div>
             </div>
